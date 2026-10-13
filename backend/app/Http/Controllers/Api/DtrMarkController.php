@@ -44,11 +44,9 @@ class DtrMarkController extends Controller
 
         DB::transaction(function () use ($validated) {
             foreach ($validated['marks'] as $m) {
-                // OFF belongs to one employee; HOLIDAY / SUSPENDED apply to everyone.
+                // OFF belongs to one employee. HOLIDAY / SUSPENDED can be for everyone ('*') or for one employee
+                // (the hospital runs on holidays, so only some staff are off).
                 if (($m['type'] ?? null) === 'OFF' && $m['scope'] === '*') {
-                    continue;
-                }
-                if (in_array($m['type'] ?? null, ['HOLIDAY', 'SUSPENDED'], true) && $m['scope'] !== '*') {
                     continue;
                 }
 

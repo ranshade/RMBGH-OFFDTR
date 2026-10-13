@@ -230,6 +230,8 @@ export default function DtrPrint({ onLock, signOut }) {
   const pDate = pick?.row.date;
   const empMark = pick ? marks.get(`${pEmp.no}|${pDate}`) : null;
   const globalMark = pick ? marks.get(`*|${pDate}`) : null;
+  const markScope = pick?.scope || 'all'; // who a Holiday / Suspended mark applies to
+  const markTarget = markScope === 'all' ? '*' : pEmp?.no;
 
   return (
     <main className="mx-auto w-full max-w-9xl space-y-5 px-4 py-6 print:p-0 sm:px-6">
@@ -322,23 +324,87 @@ export default function DtrPrint({ onLock, signOut }) {
         {shown.map((emp) => <Sheet key={emp.no} emp={emp} settings={settings} onPick={(e, row) => setPick({ emp: e, row })} />)}
       </div>
 
-      <Dialog open={!!pick} onClose={() => setPick(null)} title={pEmp ? `${pEmp.name} · ${pDate ? new Date(`${pDate}T00:00:00`).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }) : ''}` : 'Day'} description="Choose what to print for this day when there is no punch.">
-        {pick && (
-          <div className="space-y-2">
-            <Button className="w-full justify-start" variant={empMark === 'OFF' ? 'default' : 'outline'} disabled={busy} onClick={() => apply([{ scope: pEmp.no, date: pDate, type: 'OFF' }])}>OFF — this employee only</Button>
-            <Button className="w-full justify-start" variant={globalMark === 'HOLIDAY' ? 'default' : 'outline'} disabled={busy} onClick={() => apply([{ scope: '*', date: pDate, type: 'HOLIDAY' }])}>HOLIDAY — all employees</Button>
-            <Button className="w-full justify-start" variant={globalMark === 'SUSPENDED' ? 'default' : 'outline'} disabled={busy} onClick={() => apply([{ scope: '*', date: pDate, type: 'SUSPENDED' }])}>SUSPENDED — all employees</Button>
-            {empMark && <Button className="w-full justify-start" variant="ghost" disabled={busy} onClick={() => apply([{ scope: pEmp.no, date: pDate, type: null }])}>Clear OFF for this employee</Button>}
-            {globalMark && <Button className="w-full justify-start" variant="ghost" disabled={busy} onClick={() => apply([{ scope: '*', date: pDate, type: null }])}>Clear {globalMark.toLowerCase()} for all employees</Button>}
-            <div className="space-y-2 border-t pt-3">
-              <p className="text-xs text-muted-foreground">Bulk for {pEmp.name} (this cut-off). Days with punches are skipped.</p>
-              <div className="flex flex-wrap gap-2">
-                <Button size="sm" variant="outline" disabled={busy} onClick={() => apply(weekendsOff(pEmp))}>Weekends OFF</Button>
-                <Button size="sm" variant="outline" disabled={busy} onClick={() => { const l = clearOff(pEmp); if (l.length) apply(l); else setPick(null); }}>Clear all OFF</Button>
-              </div>
+      <Dialog
+        open={!!pick}
+        onClose={() => setPick(null)}
+        className="max-w-3xl"
+        title={pEmp ? `${pEmp.name} · ${pDate ? new Date(`${pDate}T00:00:00`).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }) : ''}` : 'Day'}
+        description="Choose what to print on this day when there is no punch."
+      >
+        {pick && (() => {
+          const tiles = [
+            { type: 'OFF', sub: 'This employee only', target: pEmp.no, active: empMark === 'OFF' },
+            { type: 'HOLIDAY', sub: markScope === 'all' ? 'Everyone' : 'This employee only', target: markTarget, active: marks.get(`${markTarget}|${pDate}`) === 'HOLIDAY' },
+            { type: 'SUSPENDED', sub: markScope === 'all' ? 'Everyone' : 'This employee only', target: markTarget, active: marks.get(`${markTarget}|${pDate}`) === 'SUSPENDED' },
+          ];
+          return (
+            <div className="space-y-5">
+              {(empMark || globalMark) && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3.5">
+                  <p className="text-sm font-medium text-amber-900">Already marked on this day. Wrong? Remove it.</p>
+                  <div className="mt-2.5 flex flex-wrap gap-2">
+                    {globalMark && (
+                      <div className="flex items-center gap-3 rounded-md border border-amber-200 bg-white py-1 pl-3 pr-1">
+                        <span className="text-sm"><b>{globalMark}</b> · everyone</span>
+                        <Button size="sm" variant="outline" disabled={busy} onClick={() => apply([{ scope: '*', date: pDate, type: null }])}>Remove</Button>
+                      </div>
+                    )}
+                    {empMark && (
+                      <div className="flex items-center gap-3 rounded-md border border-amber-200 bg-white py-1 pl-3 pr-1">
+                        <span className="text-sm"><b>{empMark}</b> · this employee</span>
+                        <Button size="sm" variant="outline" disabled={busy} onClick={() => apply([{ scope: pEmp.no, date: pDate, type: null }])}>Remove</Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <section className="space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="text-sm font-semibold">What should this day show?</h3>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>Holiday / Suspended for</span>
+                    <div className="inline-flex rounded-md border bg-muted/40 p-0.5 font-medium" role="group" aria-label="Applies to">
+                      {[['all', 'Everyone'], ['one', 'This employee']].map(([k, label]) => (
+                        <button key={k} type="button" onClick={() => setPick((x) => ({ ...x, scope: k }))} className={`rounded px-2.5 py-1 transition-colors ${markScope === k ? 'bg-primary text-primary-foreground shadow-sm' : 'hover:text-foreground'}`}>{label}</button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {tiles.map((t) => (
+                    <button
+                      key={t.type}
+                      type="button"
+                      disabled={busy}
+                      onClick={() => apply([{ scope: t.target, date: pDate, type: t.active ? null : t.type }])}
+                      className={`rounded-lg border p-4 text-left transition-colors disabled:opacity-60 ${t.active ? 'border-primary bg-primary/10 ring-1 ring-primary' : 'hover:bg-accent'}`}
+                    >
+                      <span className="block text-base font-semibold tracking-tight">{t.type}</span>
+                      <span className="mt-0.5 block text-xs text-muted-foreground">{t.sub}</span>
+                      <span className={`mt-2 block text-xs font-medium ${t.active ? 'text-primary' : 'text-transparent'}`} aria-hidden={!t.active}>Selected · tap again to remove</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">Staff who work on that day still print their real times instead of the label.</p>
+                {pick.row.hasPunch && (empMark || globalMark) && (
+                  <p className="text-xs font-medium text-amber-700">This employee has punches on this day, so their times are printed{empMark === 'OFF' ? ' and the empty spaces show OFF' : ' instead of the label'}.</p>
+                )}
+              </section>
+
+              <section className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
+                <div>
+                  <p className="text-sm font-medium">Quick actions for {pEmp.name}</p>
+                  <p className="text-xs text-muted-foreground">Whole cut-off. Days with punches are skipped.</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button size="sm" variant="outline" disabled={busy} onClick={() => apply(weekendsOff(pEmp))}>Weekends OFF</Button>
+                  <Button size="sm" variant="outline" disabled={busy} onClick={() => { const l = clearOff(pEmp); if (l.length) apply(l); else setPick(null); }}>Clear all OFF</Button>
+                </div>
+              </section>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </Dialog>
     </main>
   );

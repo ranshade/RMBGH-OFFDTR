@@ -45,7 +45,7 @@ export function Dialog({ open, onClose, title, description, children, className 
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={cn('relative z-10 w-full max-w-md rounded-xl border bg-card p-6 shadow-xl', className)}
+        className={cn('relative z-10 max-h-[calc(100vh-2rem)] w-full overflow-y-auto rounded-xl border bg-card p-6 shadow-xl', /(^|\s)max-w-/.test(className || '') ? '' : 'max-w-md', className)}
       >
         <button onClick={onClose} aria-label="Close" className="absolute right-4 top-4 rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>

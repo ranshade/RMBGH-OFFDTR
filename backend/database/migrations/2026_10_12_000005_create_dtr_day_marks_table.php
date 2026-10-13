@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 /**
  * Day markers printed on the DTR (Civil Service Form 48):
  *  - OFF                 -> per employee (scope = employee_no)
- *  - HOLIDAY / SUSPENDED -> for everyone   (scope = '*')
+ *  - HOLIDAY / SUSPENDED -> for everyone (scope = '*') or for one employee
  */
 return new class extends Migration {
     public function up(): void

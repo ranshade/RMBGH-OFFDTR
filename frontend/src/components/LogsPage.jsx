@@ -28,6 +28,12 @@ const shift = ({ y, m }, delta) => {
 };
 const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
 const fmtLong = (d) => d.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
+const fmtShort = (d) => d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+const fmtWeekday = (d) => d.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+// "Sep 26 – Oct 25, 2026" (years are only repeated when the cut-off crosses New Year).
+const fmtRange = (a, b) => (a.getFullYear() === b.getFullYear()
+  ? `${fmtShort(a)} – ${fmtShort(b)}, ${b.getFullYear()}`
+  : `${fmtShort(a)}, ${a.getFullYear()} – ${fmtShort(b)}, ${b.getFullYear()}`);
 const fmtDay = (iso) => new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
 const fmtTime = (iso) => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 const initials = (n) => n.split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
@@ -56,6 +62,7 @@ export default function LogsPage({ onLock, signOut }) {
   const [preview, setPreview] = useState(null); // { uuid, title }
   const [edit, setEdit] = useState(null); // { mode: 'edit' | 'add', uuid?, no, name, event, value }
   const [saving, setSaving] = useState(false);
+  const [employees, setEmployees] = useState([]); // loaded on demand, to check an edited ID
 
   const { from, to } = useMemo(() => periodRange(end), [end]);
   const fromStr = ymd(from);
@@ -159,10 +166,24 @@ export default function LogsPage({ onLock, signOut }) {
   const openPhoto = (name, p) =>
     setPreview({ uuid: p.uuid, title: `${name} · ${p.event} · ${new Date(p.at).toLocaleString()}` });
 
-  const openEdit = (emp, p) =>
-    setEdit({ mode: 'edit', uuid: p.uuid, no: emp.no, name: emp.name, event: isOut(p.event) ? 'TIME OUT' : 'TIME IN', value: toLocalInput(p.at) });
+  async function loadEmployees() {
+    if (employees.length) return;
+    try {
+      const r = await adminFetch('/employees?all=1');
+      if (r.ok) setEmployees(await r.json());
+    } catch { /* the server still validates the ID */ }
+  }
+  const openEdit = (emp, p) => {
+    loadEmployees();
+    setEdit({ mode: 'edit', uuid: p.uuid, no: emp.no, newNo: emp.no, name: emp.name, event: isOut(p.event) ? 'TIME OUT' : 'TIME IN', value: toLocalInput(p.at) });
+  };
   const openAdd = (emp, event, hintAt) =>
-    setEdit({ mode: 'add', no: emp.no, name: emp.name, event, value: hintAt ? toLocalInput(hintAt) : '' });
+    setEdit({ mode: 'add', no: emp.no, newNo: emp.no, name: emp.name, event, value: hintAt ? toLocalInput(hintAt) : '' });
+
+  // Edited employee ID: show who it belongs to, or block an unknown one (once the directory is loaded).
+  const idChanged = !!edit && edit.mode === 'edit' && edit.newNo.trim() !== edit.no;
+  const idMatch = idChanged ? employees.find((e) => e.employee_no.toLowerCase() === edit.newNo.trim().toLowerCase()) : null;
+  const badId = idChanged && (!edit.newNo.trim() || (employees.length > 0 && !idMatch));
 
   async function saveEdit() {
     if (!edit?.value) return undefined;
@@ -172,7 +193,7 @@ export default function LogsPage({ onLock, signOut }) {
       const r = await adminFetch(isEdit ? `/attendance/${edit.uuid}` : '/attendance/manual', {
         method: isEdit ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(isEdit ? { recorded_at: edit.value, event_type: edit.event } : { employee_no: edit.no, event_type: edit.event, recorded_at: edit.value }),
+        body: JSON.stringify(isEdit ? { recorded_at: edit.value, event_type: edit.event, employee_no: idMatch?.employee_no || edit.newNo.trim() } : { employee_no: edit.no, event_type: edit.event, recorded_at: edit.value }),
       });
       if (r.status === 401) return onLock('Your session expired. Please sign in again.');
       const d = await r.json().catch(() => ({}));
@@ -210,10 +231,15 @@ export default function LogsPage({ onLock, signOut }) {
   const daysRecorded = dtr.reduce((n, e) => n + new Set(e.rows.map((r) => r.day)).size, 0);
   const monthLabel = to.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
 
-  let status;
-  if (!isLatest) status = <Badge variant="secondary">Closed</Badge>;
-  else if (daysLeft <= 0) status = <Badge variant="warning">Submission due today</Badge>;
-  else status = <Badge variant="warning">{daysLeft} day{daysLeft === 1 ? '' : 's'} left</Badge>;
+  // Plain-language note under the dates.
+  const totalDays = Math.round((to - from) / 86400000) + 1;
+  const elapsed = Math.min(totalDays, Math.max(0, Math.round((midnight - from) / 86400000) + 1));
+  let hint;
+  if (!isLatest) hint = `This cut-off was submitted on ${fmtWeekday(to)}.`;
+  else if (daysLeft <= 0) hint = `Submission day is today, ${fmtWeekday(to)}.`;
+  else if (daysLeft === 1) hint = `Submission is tomorrow, ${fmtWeekday(to)}.`;
+  else hint = `${daysLeft} days left until submission on ${fmtWeekday(to)}.`;
+  const urgent = isLatest && daysLeft <= 3;
 
   const empty = (mode === 'dtr' ? !dtr.length : !filtered.length) && !error;
 
@@ -237,13 +263,21 @@ export default function LogsPage({ onLock, signOut }) {
         <div className="flex flex-wrap items-center justify-between gap-4 p-5 sm:px-6">
           <div className="flex items-center gap-4">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><IconCalendar width={22} height={22} /></div>
-            <div>
+            <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <p className="text-sm font-medium text-muted-foreground">DTR cut-off · {monthLabel}</p>
-                {isLatest && <Badge>Current period</Badge>}
-                {status}
+                <p className="text-sm font-medium text-muted-foreground">{monthLabel} cut-off</p>
+                {isLatest ? <Badge>This period</Badge> : <Badge variant="secondary">Closed</Badge>}
               </div>
-              <p className="mt-0.5 text-xl font-bold tracking-tight sm:text-2xl">{fmtLong(from)} <span className="font-normal text-muted-foreground">→</span> {fmtLong(to)}</p>
+              <p className="mt-0.5 text-xl font-bold tracking-tight sm:text-2xl">{fmtRange(from, to)}</p>
+              <p className={`mt-1 text-sm ${urgent ? 'font-medium text-amber-700' : 'text-muted-foreground'}`}>{hint}</p>
+              {isLatest && (
+                <div className="mt-2.5 flex items-center gap-2.5">
+                  <div className="h-1.5 w-40 overflow-hidden rounded-full bg-muted" role="progressbar" aria-valuemin={0} aria-valuemax={totalDays} aria-valuenow={elapsed} aria-label="Cut-off progress">
+                    <div className={`h-full rounded-full ${urgent ? 'bg-amber-500' : 'bg-primary'}`} style={{ width: `${(elapsed / totalDays) * 100}%` }} />
+                  </div>
+                  <span className="text-xs text-muted-foreground">Day {elapsed} of {totalDays}</span>
+                </div>
+              )}
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -373,10 +407,16 @@ export default function LogsPage({ onLock, signOut }) {
         open={!!edit}
         onClose={() => setEdit(null)}
         title={edit ? `${edit.mode === 'edit' ? 'Edit time' : 'Add time'} · ${edit.name}` : 'Edit time'}
-        description={edit?.mode === 'add' ? 'Add a missing punch. It is saved without a photo and marked Manual.' : 'Correct this punch. It will be marked Edited.'}
+        description={edit?.mode === 'add' ? 'Add a missing punch. It is saved without a photo and marked Manual.' : 'Correct the ID, event or time of this punch. It will be marked Edited.'}
       >
         {edit && (
           <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-id">Employee ID</Label>
+              <Input id="edit-id" value={edit.newNo} disabled={edit.mode === 'add'} onChange={(e) => setEdit((s) => ({ ...s, newNo: e.target.value }))} autoComplete="off" />
+              {idChanged && idMatch && <p className="text-xs text-emerald-700">This punch will move to {idMatch.full_name}.</p>}
+              {idChanged && badId && employees.length > 0 && <p className="text-xs text-red-600">No employee with this ID.</p>}
+            </div>
             <div className="space-y-2">
               <Label htmlFor="edit-event">Event</Label>
               <Select id="edit-event" value={edit.event} onChange={(e) => setEdit((s) => ({ ...s, event: e.target.value }))}>
@@ -391,7 +431,7 @@ export default function LogsPage({ onLock, signOut }) {
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setEdit(null)} disabled={saving}>Cancel</Button>
-              <Button onClick={saveEdit} disabled={saving || !edit.value}>{saving ? 'Saving…' : 'Save'}</Button>
+              <Button onClick={saveEdit} disabled={saving || !edit.value || badId}>{saving ? 'Saving…' : 'Save'}</Button>
             </div>
           </div>
         )}

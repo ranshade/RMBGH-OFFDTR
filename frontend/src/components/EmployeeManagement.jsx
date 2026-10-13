@@ -67,7 +67,7 @@ export default function EmployeeManagement({ onLock, signOut }) {
     setSaving(true);
     setFormError('');
     try {
-      const body = editing ? { full_name: form.full_name, status: form.status } : form;
+      const body = editing ? { employee_no: form.employee_no.trim(), full_name: form.full_name, status: form.status } : form;
       const res = await api(editing ? `/employees/${dialog.id}` : '/employees', {
         method: editing ? 'PUT' : 'POST',
         headers: jsonHeaders,
@@ -188,8 +188,8 @@ export default function EmployeeManagement({ onLock, signOut }) {
           {formError && <Alert variant="destructive">{formError}</Alert>}
           <div className="space-y-2">
             <Label htmlFor="emp-no">Employee ID / Number *</Label>
-            <Input id="emp-no" data-autofocus={dialog?.mode === 'add' ? '' : undefined} required value={form.employee_no} onChange={(e) => set('employee_no', e.target.value)} placeholder="e.g. RMBGH-001" disabled={dialog?.mode === 'edit'} />
-            {dialog?.mode === 'edit' && <p className="text-xs text-muted-foreground">Employee ID can't be changed.</p>}
+            <Input id="emp-no" data-autofocus={dialog?.mode === 'add' ? '' : undefined} required value={form.employee_no} onChange={(e) => set('employee_no', e.target.value)} placeholder="e.g. RMBGH-001" />
+            {dialog?.mode === 'edit' && <p className="text-xs text-muted-foreground">Changing the ID also updates this employee's attendance history.</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="emp-name">Full name *</Label>

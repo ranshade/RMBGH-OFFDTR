@@ -94,7 +94,7 @@ class AttendanceController extends Controller
     }
 
     /**
-     * Admin: correct the time (and optionally TIME IN / TIME OUT) of one punch.
+     * Admin: correct the time, the event (TIME IN / TIME OUT) and/or the employee ID of one punch.
      * `recorded_at` is the local (application timezone) date and time, e.g. 2026-10-12T14:03.
      */
     public function update(Request $request, string $uuid)
@@ -102,16 +102,27 @@ class AttendanceController extends Controller
         $validated = $request->validate([
             'recorded_at' => ['required', 'date'],
             'event_type' => ['nullable', Rule::in(['TIME IN', 'TIME OUT'])],
+            'employee_no' => ['nullable', 'string', 'max:50'],
         ]);
 
         $log = AttendanceLog::where('record_uuid', $uuid)->firstOrFail();
+
+        // Wrong ID punched? Move this punch to the right employee.
+        $owner = [];
+        if (!empty($validated['employee_no']) && $validated['employee_no'] !== $log->employee_no_snapshot) {
+            $employee = Employee::where('employee_no', $validated['employee_no'])->first();
+            if (!$employee) {
+                return response()->json(['message' => 'Employee ID not found.'], 422);
+            }
+            $owner = ['employee_id' => $employee->id, 'employee_no_snapshot' => $employee->employee_no];
+        }
         $recordedAt = Carbon::parse($validated['recorded_at'], config('app.timezone'))->setTimezone(config('app.timezone'));
 
         if ($recordedAt->isFuture()) {
             return response()->json(['message' => 'The time cannot be in the future.'], 422);
         }
 
-        $log->update([
+        $log->update($owner + [
             'recorded_at' => $recordedAt,
             'attendance_date' => $recordedAt->toDateString(),
             'event_type' => $validated['event_type'] ?? $log->event_type,

@@ -10,6 +10,7 @@ import { IconArrowLeft, IconChevronLeft, IconChevronRight, IconLock, IconPrinter
 import { buildDtr, currentEnd, periodFromEnd, shiftEnd, showsBreak, ymd } from '../dtr';
 
 const SETTINGS_KEY = 'dtr_settings';
+const ALL = '*';
 const DEFAULTS = {
   official: '8:00 AM - 5:00 PM',
   regularDays: '',
@@ -113,7 +114,8 @@ export default function DtrPrint({ onLock, signOut }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [settings, setSettings] = useState(loadSettings);
-  const [sel, setSel] = useState(''); // selected employee_no
+  const [sel, setSel] = useState(''); // '' = nothing, ALL = bulk, otherwise an employee_no
+  const [showEmpty, setShowEmpty] = useState(false);
   const [query, setQuery] = useState('');
   const [pick, setPick] = useState(null); // { emp, row }
   const [busy, setBusy] = useState(false);
@@ -159,7 +161,10 @@ export default function DtrPrint({ onLock, signOut }) {
     () => buildDtr({ logs, employees, from, to, marks, fillBreak: showsBreak(settings.official) }),
     [logs, employees, marks, fromStr, toStr, settings.official],
   );
-  const shown = all.filter((e) => e.no === sel);
+  const hasMarks = (e) => e.panels.some((p) => p.rows.some((r) => r.mark === 'OFF'));
+  const withRecords = all.filter((e) => e.punchDays > 0 || hasMarks(e));
+  // Bulk: everyone with punches (or OFF marks) in this cut-off; optionally also those without any record.
+  const shown = sel === ALL ? (showEmpty ? all : withRecords) : all.filter((e) => e.no === sel);
 
   // Search by employee ID (or name); exact ID matches come first.
   const q = query.trim().toLowerCase();
@@ -264,13 +269,19 @@ export default function DtrPrint({ onLock, signOut }) {
                 )) : <p className="px-3 py-2 text-sm text-muted-foreground">No employee found.</p>}
               </div>
             )}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-0.5 text-xs">
+              <button type="button" onClick={() => { setSel(ALL); setQuery(''); }} className={`font-medium hover:underline ${sel === ALL ? 'text-foreground' : 'text-primary'}`}>
+                Print all employees with records ({withRecords.length})
+              </button>
+              {sel && <span className="text-muted-foreground">Showing: {sel === ALL ? 'all employees' : all.find((e) => e.no === sel)?.name || sel}</span>}
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="dtr-hours">Official hours</Label>
             <Input id="dtr-hours" value={settings.official} onChange={set('official')} placeholder="8:00 AM - 5:00 PM" />
           </div>
           <div className="flex items-end">
-            <Button className="w-full" onClick={() => window.print()} disabled={!shown.length}><IconPrinter /> Print DTR</Button>
+            <Button className="w-full" onClick={() => window.print()} disabled={!shown.length}><IconPrinter /> Print {shown.length > 1 ? `${shown.length} DTRs` : 'DTR'}</Button>
           </div>
           <div className="space-y-2">
             <Label htmlFor="dtr-reg">Regular days (optional)</Label>
@@ -288,6 +299,12 @@ export default function DtrPrint({ onLock, signOut }) {
             <Label htmlFor="dtr-title">Title</Label>
             <Input id="dtr-title" value={settings.headTitle} onChange={set('headTitle')} />
           </div>
+          {sel === ALL && (
+            <label className="flex items-center gap-2 text-sm sm:col-span-2">
+              <input type="checkbox" checked={showEmpty} onChange={(e) => setShowEmpty(e.target.checked)} />
+              Include employees with no records in this cut-off
+            </label>
+          )}
           <p className="text-xs text-muted-foreground sm:col-span-2">
             8-hour official hours (e.g. 8:00 AM - 5:00 PM) print 12:00 NN / 1:00 PM in between. 12-hour official hours (e.g. 7:00 AM - 7:00 PM) print only the real time in and time out.
           </p>
@@ -301,7 +318,7 @@ export default function DtrPrint({ onLock, signOut }) {
 
       <div className="dtr-stage">
         {loading && <p className="py-12 text-center text-sm text-muted-foreground print:hidden">Loading…</p>}
-        {!loading && !shown.length && <p className="py-12 text-center text-sm text-muted-foreground print:hidden">Search an employee ID above to show their DTR.</p>}
+        {!loading && !shown.length && <p className="py-12 text-center text-sm text-muted-foreground print:hidden">Search an employee ID above, or choose all employees, to show the DTR.</p>}
         {shown.map((emp) => <Sheet key={emp.no} emp={emp} settings={settings} onPick={(e, row) => setPick({ emp: e, row })} />)}
       </div>
 

@@ -19,11 +19,28 @@ export const MARK_TYPES = ['OFF', 'HOLIDAY', 'SUSPENDED'];
  * The fixed 12:00 NN / 1:00 PM break is only printed for regular (about 8-hour) schedules;
  * 12-hour shifts show just the real time in and time out (AM in, PM out).
  */
-export function shiftLength(text) {
+export function officialRange(text) {
   const m = String(text || '').match(/(\d{1,2})(?::(\d{2}))?\s*([ap])\.?m?\.?\s*(?:-|–|—|to)\s*(\d{1,2})(?::(\d{2}))?\s*([ap])/i);
   if (!m) return null;
   const mins = (h, mi, ap) => ((+h % 12) + (ap.toLowerCase() === 'p' ? 12 : 0)) * 60 + (+mi || 0);
-  return (((mins(m[4], m[5], m[6]) - mins(m[1], m[2], m[3])) + 1440) % 1440) / 60;
+  return { start: mins(m[1], m[2], m[3]), end: mins(m[4], m[5], m[6]) }; // minutes since midnight
+}
+export function shiftLength(text) {
+  const r = officialRange(text);
+  return r ? (((r.end - r.start) + 1440) % 1440) / 60 : null;
+}
+
+/*
+ * Grace period: a time in that is late by no more than `grace` minutes after the official start is
+ * printed as the official start (8:14 AM with an 8:00 AM start prints as 8:00 AM). Early arrivals and
+ * anything later than the grace period are printed as punched.
+ */
+export function applyGrace(at, officialStart, grace) {
+  if (officialStart == null || !(grace > 0)) return at;
+  const m = at.getHours() * 60 + at.getMinutes() + at.getSeconds() / 60;
+  const late = (m - officialStart + 1440) % 1440; // minutes after the official start (wraps over midnight)
+  if (late === 0 || late > grace) return at;
+  return new Date(at.getTime() - Math.round(late * 60000));
 }
 export const showsBreak = (officialHours) => {
   const h = shiftLength(officialHours);
@@ -105,7 +122,7 @@ function placePunches(punches, inRange, fillBreak) {
  * @param employees  rows from GET /employees?all=1 (optional; used for names/status)
  * @param marks      Map of `${employee_no or '*'}|YYYY-MM-DD` -> 'OFF' | 'HOLIDAY' | 'SUSPENDED'
  */
-export function buildDtr({ logs, employees = [], from, to, marks = new Map(), fillBreak = true }) {
+export function buildDtr({ logs, employees = [], from, to, marks = new Map(), fillBreak = true, officialStart = null, grace = 0 }) {
   const fromStr = ymd(from);
   const toStr = ymd(to);
   const inRange = (s) => s >= fromStr && s <= toStr;
@@ -118,7 +135,9 @@ export function buildDtr({ logs, employees = [], from, to, marks = new Map(), fi
     .forEach((l) => {
       const no = l.employee_no_snapshot;
       if (!punchesByNo.has(no)) punchesByNo.set(no, []);
-      punchesByNo.get(no).push({ out: isOutEvent(l.event_type), at: new Date(l.recorded_at) });
+      const out = isOutEvent(l.event_type);
+      const at = new Date(l.recorded_at);
+      punchesByNo.get(no).push({ out, at: out ? at : applyGrace(at, officialStart, grace) });
       if (l.employee?.full_name) nameByNo.set(no, l.employee.full_name);
     });
 

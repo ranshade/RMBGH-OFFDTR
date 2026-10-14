@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { Dialog } from './ui/dialog';
 import { IconList, IconLock, IconPencil, IconPlus, IconSearch } from './ui/icons';
 
-const emptyForm = { employee_no: '', full_name: '', status: 'active' };
+const emptyForm = { employee_no: '', full_name: '', status: 'active', password: '' };
 const initials = (n) => n.split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
 
 /* ---------- Management screen ---------- */
@@ -21,6 +21,7 @@ export default function EmployeeManagement({ onLock, signOut }) {
   const [form, setForm] = useState(emptyForm);
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [showPw, setShowPw] = useState(false);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   const say = (text, type = 'success') => (type === 'error' ? toast.error(text) : toast.success(text));
@@ -52,11 +53,13 @@ export default function EmployeeManagement({ onLock, signOut }) {
   function openAdd() {
     setForm(emptyForm);
     setFormError('');
+    setShowPw(false);
     setDialog({ mode: 'add' });
   }
   function openEdit(emp) {
-    setForm({ employee_no: emp.employee_no, full_name: emp.full_name, status: emp.status });
+    setForm({ employee_no: emp.employee_no, full_name: emp.full_name, status: emp.status, password: '' });
     setFormError('');
+    setShowPw(false);
     setDialog({ mode: 'edit', id: emp.id });
   }
   const closeDialog = () => !saving && setDialog(null);
@@ -67,7 +70,9 @@ export default function EmployeeManagement({ onLock, signOut }) {
     setSaving(true);
     setFormError('');
     try {
-      const body = editing ? { employee_no: form.employee_no.trim(), full_name: form.full_name, status: form.status } : form;
+      const body = editing
+        ? { employee_no: form.employee_no.trim(), full_name: form.full_name, status: form.status, password: form.password || undefined }
+        : { ...form, password: form.password || undefined };
       const res = await api(editing ? `/employees/${dialog.id}` : '/employees', {
         method: editing ? 'PUT' : 'POST',
         headers: jsonHeaders,
@@ -159,6 +164,7 @@ export default function EmployeeManagement({ onLock, signOut }) {
                       <div className="flex items-center gap-3">
                         <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${emp.status === 'active' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>{initials(emp.full_name)}</div>
                         <span className="font-medium">{emp.full_name}</span>
+                        {!emp.has_password && <Badge variant="secondary" className="px-1.5 text-[10px]">No password</Badge>}
                       </div>
                     </TableCell>
                     <TableCell className="font-mono text-xs text-muted-foreground">{emp.employee_no}</TableCell>
@@ -194,6 +200,14 @@ export default function EmployeeManagement({ onLock, signOut }) {
           <div className="space-y-2">
             <Label htmlFor="emp-name">Full name *</Label>
             <Input id="emp-name" data-autofocus={dialog?.mode === 'edit' ? '' : undefined} required value={form.full_name} onChange={(e) => set('full_name', e.target.value)} placeholder="Employee full name" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="emp-pw">{dialog?.mode === 'edit' ? 'New password' : 'Password'}</Label>
+            <Input id="emp-pw" type={showPw ? 'text' : 'password'} autoComplete="new-password" minLength={6} value={form.password} onChange={(e) => set('password', e.target.value)} placeholder={dialog?.mode === 'edit' ? 'Leave blank to keep the current password' : 'At least 6 characters'} />
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs text-muted-foreground">The employee signs in to <b>My DTR</b> with their ID and this password. It opens their own DTR only.</p>
+              <label className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground"><input type="checkbox" checked={showPw} onChange={(e) => setShowPw(e.target.checked)} /> Show</label>
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="emp-status">Status</Label>

@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\AttendanceReportController;
 use App\Http\Controllers\Api\DepartmentController;
 use App\Http\Controllers\Api\DtrMarkController;
 use App\Http\Controllers\Api\AdminAuthController;
+use App\Http\Controllers\Api\EmployeeAuthController;
 
 Route::get('/health', [HealthController::class, 'show']);
 Route::get('/employees', [EmployeeController::class, 'index']);
@@ -23,7 +24,9 @@ Route::delete('/departments/{department}', [DepartmentController::class, 'destro
 Route::get('/attendance', [AttendanceController::class, 'index'])->middleware('admin');
 Route::get('/attendance/{uuid}/photo', [AttendanceController::class, 'photo'])->middleware('admin')->whereUuid('uuid');
 Route::get('/attendance/next', [AttendanceController::class, 'nextEvent']);
-Route::get('/attendance/my', [AttendanceController::class, 'mine'])->middleware('throttle:30,1');
+Route::post('/employee/login', [EmployeeAuthController::class, 'login']);
+Route::post('/employee/logout', [EmployeeAuthController::class, 'logout'])->middleware('employee');
+Route::get('/attendance/my', [AttendanceController::class, 'mine'])->middleware(['employee', 'throttle:60,1']);
 Route::post('/attendance', [AttendanceController::class, 'store']);
 Route::post('/attendance/manual', [AttendanceController::class, 'storeManual'])->middleware('admin');
 Route::put('/attendance/{uuid}', [AttendanceController::class, 'update'])->middleware('admin')->whereUuid('uuid');

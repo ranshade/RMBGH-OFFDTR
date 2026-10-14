@@ -7,12 +7,13 @@ import { Alert } from './ui/alert';
 import { Badge } from './ui/badge';
 import { Dialog } from './ui/dialog';
 import { IconArrowLeft, IconChevronLeft, IconChevronRight, IconLock, IconPrinter } from './ui/icons';
-import { buildDtr, currentEnd, periodFromEnd, shiftEnd, showsBreak, ymd } from '../dtr';
+import { buildDtr, currentEnd, officialRange, periodFromEnd, shiftEnd, showsBreak, ymd } from '../dtr';
 
 const SETTINGS_KEY = 'dtr_settings';
 const ALL = '*';
 const DEFAULTS = {
   official: '8:00 AM - 5:00 PM',
+  grace: '15', // minutes
   regularDays: '',
   saturdays: '',
   head: 'DAVE ANTHONY A. VERGARA, MD',
@@ -158,8 +159,8 @@ export default function DtrPrint({ onLock, signOut }) {
   }, [fromStr, toStr]);
 
   const all = useMemo(
-    () => buildDtr({ logs, employees, from, to, marks, fillBreak: showsBreak(settings.official) }),
-    [logs, employees, marks, fromStr, toStr, settings.official],
+    () => buildDtr({ logs, employees, from, to, marks, fillBreak: showsBreak(settings.official), officialStart: officialRange(settings.official)?.start ?? null, grace: Number(settings.grace) || 0 }),
+    [logs, employees, marks, fromStr, toStr, settings.official, settings.grace],
   );
   const hasMarks = (e) => e.panels.some((p) => p.rows.some((r) => r.mark === 'OFF'));
   const withRecords = all.filter((e) => e.punchDays > 0 || hasMarks(e));
@@ -286,6 +287,10 @@ export default function DtrPrint({ onLock, signOut }) {
             <Button className="w-full" onClick={() => window.print()} disabled={!shown.length}><IconPrinter /> Print {shown.length > 1 ? `${shown.length} DTRs` : 'DTR'}</Button>
           </div>
           <div className="space-y-2">
+            <Label htmlFor="dtr-grace">Grace period (minutes)</Label>
+            <Input id="dtr-grace" type="number" min="0" max="60" value={settings.grace} onChange={set('grace')} />
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="dtr-reg">Regular days (optional)</Label>
             <Input id="dtr-reg" value={settings.regularDays} onChange={set('regularDays')} />
           </div>
@@ -308,7 +313,7 @@ export default function DtrPrint({ onLock, signOut }) {
             </label>
           )}
           <p className="text-xs text-muted-foreground sm:col-span-2">
-            8-hour official hours (e.g. 8:00 AM - 5:00 PM) print 12:00 NN / 1:00 PM in between. 12-hour official hours (e.g. 7:00 AM - 7:00 PM) print only the real time in and time out.
+            8-hour official hours (e.g. 8:00 AM - 5:00 PM) print 12:00 NN / 1:00 PM in between. 12-hour official hours (e.g. 7:00 AM - 7:00 PM) print only the real time in and time out. A time in within the grace period after the official start prints as the official start (8:14 AM with an 8:00 AM start prints as 8:00 AM); early arrivals print as punched.
           </p>
         </div>
 

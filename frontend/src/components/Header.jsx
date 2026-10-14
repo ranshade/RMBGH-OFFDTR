@@ -17,7 +17,7 @@ export default function Header({ view }) {
         </a>
         <nav className="flex items-center gap-1" aria-label="Main">
           <a href="/" className={link(view === 'kiosk')}>Attendance</a>
-          <a href="/?view=mylogs" className={link(view === 'mylogs')}>My Logs</a>
+          <a href="/?view=mylogs" className={link(view === 'mylogs')}>My DTR</a>
           <a href="/?view=manage" className={link(view === 'manage' || view === 'logs' || view === 'dtr')}>Admin</a>
         </nav>
       </div>

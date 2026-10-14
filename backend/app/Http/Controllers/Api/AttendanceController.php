@@ -42,27 +42,21 @@ class AttendanceController extends Controller
     }
 
     /**
-     * Public, read-only view for employees: their own punches for a date range.
+     * Read-only view for a signed-in employee: their own punches for a date range.
      * No photos and no other employees are exposed; the range is capped.
      */
     public function mine(Request $request)
     {
         $validated = $request->validate([
-            'employee_no' => ['required', 'string', 'max:50'],
             'from' => ['required', 'date_format:Y-m-d'],
             'to' => ['required', 'date_format:Y-m-d', 'after_or_equal:from'],
         ]);
 
+        // Set by the `employee` middleware from the signed-in token: an employee only ever sees their own punches.
+        $employee = $request->attributes->get('employee');
+
         if (abs(Carbon::parse($validated['from'])->diffInDays(Carbon::parse($validated['to']))) > 45) {
             return response()->json(['message' => 'Date range is too long.'], 422);
-        }
-
-        $employee = Employee::where('employee_no', $validated['employee_no'])
-            ->where('status', 'active')
-            ->first();
-
-        if (!$employee) {
-            return response()->json(['message' => 'Employee ID not found.'], 404);
         }
 
         $logs = AttendanceLog::where('employee_id', $employee->id)

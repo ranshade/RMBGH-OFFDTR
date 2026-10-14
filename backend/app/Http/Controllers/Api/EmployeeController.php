@@ -8,6 +8,7 @@ use App\Models\DtrDayMark;
 use App\Models\Employee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use App\Support\AdminToken;
@@ -35,7 +36,12 @@ class EmployeeController extends Controller
             });
         }
 
-        return response()->json($query->orderBy('full_name')->limit(500)->get());
+        $rows = $query->orderBy('full_name')->limit(500)->get();
+        if ($request->boolean('all')) {
+            $rows->each->append('has_password'); // admin only: who can sign in to My DTR
+        }
+
+        return response()->json($rows);
     }
 
     public function update(Request $request, Employee $employee)
@@ -46,7 +52,14 @@ class EmployeeController extends Controller
             'department' => ['nullable', 'string', 'max:120'],
             'position' => ['nullable', 'string', 'max:120'],
             'status' => ['sometimes', Rule::in(['active', 'inactive'])],
+            'password' => ['nullable', 'string', 'min:6', 'max:100'], // blank = keep the current password
         ]);
+
+        if (!empty($validated['password'])) {
+            $validated['password'] = Hash::make($validated['password']);
+        } else {
+            unset($validated['password']);
+        }
 
         $oldNo = $employee->employee_no;
 
@@ -67,7 +80,7 @@ class EmployeeController extends Controller
             }
         });
 
-        return response()->json($employee->fresh());
+        return response()->json($employee->fresh()->append('has_password'));
     }
 
     public function store(Request $request)
@@ -78,9 +91,16 @@ class EmployeeController extends Controller
             'department' => ['nullable', 'string', 'max:120'],
             'position' => ['nullable', 'string', 'max:120'],
             'status' => ['nullable', Rule::in(['active', 'inactive'])],
+            'password' => ['nullable', 'string', 'min:6', 'max:100'],
         ]);
 
         $validated['status'] = $validated['status'] ?? 'active';
-        return response()->json(Employee::create($validated), 201);
+        if (!empty($validated['password'])) {
+            $validated['password'] = Hash::make($validated['password']);
+        } else {
+            unset($validated['password']);
+        }
+
+        return response()->json(Employee::create($validated)->append('has_password'), 201);
     }
 }

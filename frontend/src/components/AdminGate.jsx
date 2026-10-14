@@ -36,7 +36,7 @@ function AdminLogin({ onUnlock, notice }) {
         <form onSubmit={submit}>
           <CardHeader className="items-center text-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary"><IconLock width={22} height={22} /></div>
-            <CardTitle className="pt-2 text-xl">Super admin access</CardTitle>
+            <CardTitle className="pt-2 text-xl">Super Admin Access</CardTitle>
             <CardDescription>Employee Management is restricted. Enter the super admin password to continue.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

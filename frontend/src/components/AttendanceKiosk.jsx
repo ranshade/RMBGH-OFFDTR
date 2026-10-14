@@ -252,15 +252,16 @@ export default function AttendanceKiosk() {
                       </div>
                       <Badge variant={eventVariant(latest.record.event_type)} className="shrink-0">{latest.record.event_type}</Badge>
                     </div>
-                    <dl className="mt-4 divide-y rounded-lg border text-sm">
+                    <dl className="mt-4 divide-y overflow-hidden rounded-lg border text-sm">
                       {[
                         ['Date', new Date(latest.record.recorded_at).toLocaleDateString()],
                         ['Time', new Date(latest.record.recorded_at).toLocaleTimeString()],
                         ['Station', latest.record.station_code || STATION],
                       ].map(([k, v]) => (
-                        <div key={k} className="flex justify-between px-4 py-2.5">
-                          <dt className="text-muted-foreground">{k}</dt>
-                          <dd className="font-medium">{v}</dd>
+                        // The time is what staff look for after punching, so it stands out in sky blue.
+                        <div key={k} className={k === 'Time' ? 'flex items-center justify-between bg-sky-100 px-4 py-3.5' : 'flex justify-between px-4 py-2.5'}>
+                          <dt className={k === 'Time' ? 'font-semibold text-sky-800' : 'text-muted-foreground'}>{k}</dt>
+                          <dd className={k === 'Time' ? 'text-lg font-bold tabular-nums text-sky-900' : 'font-medium'}>{v}</dd>
                         </div>
                       ))}
                     </dl>

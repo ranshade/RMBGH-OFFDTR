@@ -258,42 +258,48 @@ export default function LogsPage({ onLock, signOut }) {
         </div>
       </div>
 
-      {/* DTR cut-off card */}
-      <Card className="overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-4 p-5 sm:px-6">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><IconCalendar width={22} height={22} /></div>
-            <div className="min-w-0">
+      {/* DTR cut-off overview */}
+      <Card className="group relative overflow-hidden rounded-2xl border-slate-200/80 bg-white shadow-sm">
+        <div className="absolute inset-y-0 left-0 w-1 bg-sky-600" aria-hidden="true" />
+        <div className="grid gap-5 p-5 pl-6 sm:p-6 sm:pl-7 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+          <div className="flex min-w-0 items-start gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-sky-50 text-sky-700 ring-1 ring-inset ring-sky-100">
+              <IconCalendar width={22} height={22} />
+            </div>
+            <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <p className="text-sm font-medium text-muted-foreground">{monthLabel} cut-off</p>
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">{monthLabel} cut-off</p>
                 {isLatest ? <Badge>This period</Badge> : <Badge variant="secondary">Closed</Badge>}
               </div>
-              <p className="mt-0.5 text-xl font-bold tracking-tight sm:text-2xl">{fmtRange(from, to)}</p>
-              <p className={`mt-1 text-sm ${urgent ? 'font-medium text-amber-700' : 'text-muted-foreground'}`}>{hint}</p>
+              <p className="mt-1 text-2xl font-bold tracking-tight text-slate-950 sm:text-[1.75rem]">{fmtRange(from, to)}</p>
+              <p className={`mt-1.5 text-sm leading-5 ${urgent ? 'font-semibold text-amber-700' : 'text-slate-500'}`}>{hint}</p>
               {isLatest && (
-                <div className="mt-2.5 flex items-center gap-2.5">
-                  <div className="h-1.5 w-40 overflow-hidden rounded-full bg-muted" role="progressbar" aria-valuemin={0} aria-valuemax={totalDays} aria-valuenow={elapsed} aria-label="Cut-off progress">
-                    <div className={`h-full rounded-full ${urgent ? 'bg-amber-500' : 'bg-primary'}`} style={{ width: `${(elapsed / totalDays) * 100}%` }} />
+                <div className="mt-4 max-w-md">
+                  <div className="mb-1.5 flex items-center justify-between gap-3 text-xs">
+                    <span className="font-medium text-slate-600">Period progress</span>
+                    <span className="tabular-nums text-slate-500">Day {elapsed} of {totalDays}</span>
                   </div>
-                  <span className="text-xs text-muted-foreground">Day {elapsed} of {totalDays}</span>
+                  <div className="h-2 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-valuemin={0} aria-valuemax={totalDays} aria-valuenow={elapsed} aria-label="Cut-off progress">
+                    <div className={`h-full rounded-full transition-all ${urgent ? 'bg-amber-500' : 'bg-sky-600'}`} style={{ width: `${(elapsed / totalDays) * 100}%` }} />
+                  </div>
                 </div>
               )}
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex items-center rounded-lg border bg-card shadow-sm">
-              <Button variant="ghost" size="icon" className="rounded-r-none" onClick={() => setEnd((e) => shift(e, -1))} aria-label="Previous cut-off"><IconChevronLeft /></Button>
+          <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+            <div className="inline-flex h-10 items-center rounded-xl border border-slate-200 bg-slate-50 p-0.5">
+              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg text-slate-600 hover:bg-white" onClick={() => setEnd((e) => shift(e, -1))} aria-label="Previous cut-off"><IconChevronLeft /></Button>
               <button
                 onClick={() => setEnd(currentPeriodEnd())}
                 disabled={isLatest}
-                className="h-9 border-x px-3 text-sm font-medium transition-colors hover:bg-accent disabled:cursor-default disabled:text-muted-foreground disabled:hover:bg-transparent"
+                className="h-9 rounded-lg px-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-white disabled:cursor-default disabled:text-slate-400 disabled:hover:bg-transparent"
               >
                 Current
               </button>
-              <Button variant="ghost" size="icon" className="rounded-l-none" disabled={isLatest} onClick={() => setEnd((e) => shift(e, 1))} aria-label="Next cut-off"><IconChevronRight /></Button>
+              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg text-slate-600 hover:bg-white" disabled={isLatest} onClick={() => setEnd((e) => shift(e, 1))} aria-label="Next cut-off"><IconChevronRight /></Button>
             </div>
-            <Button variant="outline" onClick={() => { window.location.href = `/?view=dtr&end=${to.getFullYear()}-${pad(to.getMonth() + 1)}`; }}><IconPrinter /> Print DTR</Button>
-            <Button onClick={exportCsv}><IconDownload /> Export CSV</Button>
+            <Button variant="outline" className="h-10 rounded-xl border-slate-200" onClick={() => { window.location.href = `/?view=dtr&end=${to.getFullYear()}-${pad(to.getMonth() + 1)}`; }}><IconPrinter /> Print DTR</Button>
+            <Button className="h-10 rounded-xl bg-sky-700 text-white hover:bg-sky-800" onClick={exportCsv}><IconDownload /> Export CSV</Button>
           </div>
         </div>
       </Card>

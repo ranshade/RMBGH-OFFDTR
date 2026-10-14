@@ -77,3 +77,81 @@
   .dtr-sheet:last-child { break-after: auto; page-break-after: auto; }
   .dtr-table tr { break-inside: avoid; }
 }
+
+
+/* ===== Modern RMBGH workspace redesign ===== */
+:root { --app-ink:#14243b; --app-muted:#68778d; --app-line:#e2e9f2; --app-surface:#fff; --app-blue:#087eb8; }
+body { background:#f3f6fb; color:var(--app-ink); }
+#root { min-height:100vh; }
+.app-shell { min-height:100vh; background:linear-gradient(180deg,#f8fbff 0,#f2f6fb 340px,#f4f7fb 100%); }
+.modern-header { position:sticky; top:0; z-index:40; background:rgba(255,255,255,.94); backdrop-filter:blur(16px); border-bottom:1px solid #e5ebf3; box-shadow:0 4px 20px rgba(18,39,66,.045); }
+.modern-header-inner { width:calc(100% - 48px); max-width:1800px; min-height:82px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:24px; padding:13px 0; }
+.modern-brand { display:flex; align-items:center; gap:12px; min-width:0; text-decoration:none; }
+.modern-logo { display:grid; place-items:center; width:48px; height:48px; flex:none; overflow:hidden; border:1px solid #e0e8f1; border-radius:15px; background:white; box-shadow:0 5px 15px rgba(16,42,67,.08); }
+.modern-logo img { width:100%; height:100%; object-fit:contain; padding:4px; }
+.modern-brand-title { display:block; color:#10243b; font-size:19px; font-weight:850; letter-spacing:-.045em; line-height:1.15; }
+.modern-brand-title span { color:#0782bd; }
+.modern-brand-subtitle { display:block; margin-top:5px; color:#718096; font-size:11px; letter-spacing:.005em; }
+.modern-header-actions { display:flex; align-items:center; gap:20px; }
+.modern-section-label { color:#8290a3; font-size:10px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; white-space:nowrap; }
+.modern-nav { display:flex; gap:4px; align-items:center; padding:5px; border:1px solid #e7edf5; border-radius:15px; background:#f5f8fc; }
+.modern-nav-link { display:inline-flex; align-items:center; justify-content:center; border-radius:10px; padding:10px 15px; color:#53647a; font-size:13px; font-weight:700; text-decoration:none; transition:background .18s,color .18s,box-shadow .18s; }
+.modern-nav-link:hover { color:#0e739f; background:#eaf5fb; }
+.modern-nav-link.is-active { color:#086d9c; background:#fff; box-shadow:0 2px 7px rgba(20,44,70,.09); }
+/* Full-width content: avoid the large empty gutters on wide screens. */
+.attendance-main { max-width:none !important; width:100% !important; padding-left:clamp(14px,2vw,36px) !important; padding-right:clamp(14px,2vw,36px) !important; padding-top:24px !important; padding-bottom:32px !important; }
+.app-view-mylogs main, .app-view-manage main, .app-view-logs main, .app-view-dtr main { max-width:none !important; width:100% !important; padding-left:clamp(14px,2vw,36px) !important; padding-right:clamp(14px,2vw,36px) !important; padding-top:30px !important; padding-bottom:40px !important; }
+/* Modern card surfaces, fields, tables and dialogs across the employee/admin workspaces. */
+.app-shell [class~="rounded-xl"][class*="border"], .app-shell [class*="rounded-lg"][class*="border"] { border-color:#e1e8f1; }
+.app-shell main > .rounded-xl, .app-shell main > div > .rounded-xl { box-shadow:0 8px 28px rgba(23,47,76,.045); }
+.app-shell input:not([type="checkbox"]), .app-shell select, .app-shell textarea { min-height:42px; border-radius:11px; border-color:#dbe4ef; background:#fff; transition:border-color .15s,box-shadow .15s; }
+.app-shell input:focus, .app-shell select:focus, .app-shell textarea:focus { outline:none; border-color:#45a6d1; box-shadow:0 0 0 3px rgba(14,165,233,.12); }
+.app-shell button { transition:transform .15s,box-shadow .15s,background .15s; }
+.app-shell button:active { transform:translateY(1px); }
+.app-shell table thead { background:#f6f9fc; }
+.app-shell table thead th { color:#65758a; font-size:11px; font-weight:800; letter-spacing:.045em; text-transform:uppercase; }
+.app-shell table tbody tr { transition:background .12s; }
+.app-shell table tbody tr:hover { background:#f6fbff; }
+.app-view-manage main > div:first-child h2, .app-view-logs main > div:first-child h2, .app-view-dtr main > div:first-child h2, .app-view-mylogs main h2 { color:#13253d; letter-spacing:-.045em; }
+.app-view-manage main > .grid > *, .app-view-logs main > .grid > * { border-radius:16px; box-shadow:0 7px 22px rgba(21,45,74,.045); }
+.app-view-manage main > :first-child, .app-view-logs main > :first-child, .app-view-dtr main > :first-child { margin-bottom:8px; }
+/* Attendance screen: preserve all capture/clock logic while giving it a full-bleed workspace. */
+.app-view-kiosk { background:#f2f6fb; }
+.app-view-kiosk .attendance-main > .rounded-xl, .app-view-kiosk .attendance-main > [class*="rounded"] { border-radius:20px; border-color:#e1e8f1; box-shadow:0 10px 32px rgba(18,43,72,.07); }
+.app-view-kiosk .attendance-main h2 { color:#132b45; font-size:22px; letter-spacing:-.035em; }
+.app-view-kiosk .attendance-main video { border-radius:12px; }
+.app-view-kiosk #employee-id { min-height:52px; border-radius:13px; font-size:17px; }
+.app-view-kiosk .attendance-main button { border-radius:11px; font-weight:700; }
+.app-view-kiosk .attendance-main button[class*="h-14"] { min-height:58px; box-shadow:0 6px 14px rgba(2,132,199,.18); }
+.app-view-kiosk .attendance-main .border-b { border-color:#e8edf4; }
+.app-view-kiosk .attendance-main .bg-muted\/40 { background:#f7f9fc; }
+/* Login and access gates */
+.app-view-manage main.flex.items-center, .app-view-logs main.flex.items-center { position:relative; }
+.app-shell main.flex.items-center.justify-center { min-height:calc(100vh - 84px); background:radial-gradient(ellipse at 50% 0%,rgba(14,165,233,.09),transparent 56%); }
+.app-shell main.flex.items-center.justify-center > .rounded-xl { max-width:440px; border:1px solid #e1e9f2; border-radius:22px; box-shadow:0 22px 65px rgba(18,43,72,.12); }
+.app-shell main.flex.items-center.justify-center [class*="bg-primary/10"] { border-radius:16px; }
+.app-shell main.flex.items-center.justify-center h2 { letter-spacing:-.035em; }
+.app-view-mylogs main > .space-y-5 > .space-y-5 > .mx-auto { max-width:480px; }
+.app-view-mylogs main > .space-y-5 > .space-y-5 > .mx-auto, .app-view-mylogs main > .space-y-5 > .space-y-5 > .max-w-md { border-radius:22px; box-shadow:0 16px 45px rgba(18,43,72,.08); }
+.app-view-mylogs main > .space-y-5 > .space-y-5 form button[type="submit"] { min-height:46px; }
+.dtr-stage { border-radius:16px; }
+@media (min-width:1500px) {
+  .app-view-kiosk .attendance-main > .rounded-xl { min-height:calc(100vh - 142px); }
+}
+@media (max-width:800px) {
+  .modern-header { position:relative; }
+  .modern-header-inner { width:calc(100% - 28px); align-items:flex-start; flex-direction:column; gap:12px; padding:12px 0; }
+  .modern-logo { width:42px; height:42px; border-radius:13px; }
+  .modern-brand-title { font-size:17px; }
+  .modern-brand-subtitle { max-width:270px; font-size:10px; }
+  .modern-header-actions { width:100%; align-items:stretch; flex-direction:column; gap:7px; }
+  .modern-nav { width:100%; }
+  .modern-nav-link { flex:1; padding:10px 7px; font-size:12px; }
+  .modern-section-label { display:none; }
+  .attendance-main { padding-top:14px !important; }
+  .app-view-mylogs main, .app-view-manage main, .app-view-logs main, .app-view-dtr main { padding-top:20px !important; }
+}
+@media print {
+  .modern-header { display:none !important; }
+  .app-view-dtr main { padding:0 !important; }
+}

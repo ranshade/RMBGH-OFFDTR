@@ -161,7 +161,7 @@ export default function AttendanceKiosk() {
   const lookupText = { checking: 'Checking…', notfound: 'Employee not found or inactive. Contact the authorized administrator.', error: 'Cannot reach employee records. Check that Laravel and MySQL are running.' }[lookup];
 
   return (
-    <main className="mx-auto flex w-full max-w-9xl flex-1 flex-col px-4 py-5 sm:px-6">
+    <main className="attendance-main flex w-full flex-1 flex-col px-4 py-5 sm:px-6">
       <Card className="flex flex-1 flex-col overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b px-5 py-4 sm:px-6">
           <div>

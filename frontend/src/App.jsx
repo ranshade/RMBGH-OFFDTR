@@ -12,7 +12,7 @@ export default function App() {
   const current = view === 'manage' ? 'manage' : view === 'logs' ? 'logs' : view === 'dtr' ? 'dtr' : view === 'mylogs' ? 'mylogs' : 'kiosk';
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className={`app-shell app-view-${current} flex min-h-screen flex-col`}>
       <Toaster
         position="top-right"
         closeButton

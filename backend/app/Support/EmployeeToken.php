@@ -7,11 +7,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
-/**
- * Session token for an employee who signed in with their ID + password.
- * It only unlocks the employee's own DTR (see the `employee` middleware) and is revoked
- * automatically when the admin changes that employee's password or deactivates them.
- */
 class EmployeeToken
 {
     private static function key(string $token): string

@@ -18,7 +18,7 @@ class EmployeeController extends Controller
     public function index(Request $request)
     {
         $search = trim((string) $request->query('search', ''));
-        $query = Employee::query();
+        $query = Employee::query()->where('employee_no', '!=', config('admin.superadmin_employee_no'));
         if ($request->boolean('all')) {
             if (!AdminToken::valid($request)) {
                 return response()->json(['message' => 'Super admin login required.'], 401);

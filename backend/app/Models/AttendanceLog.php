@@ -12,6 +12,8 @@ class AttendanceLog extends Model
         'event_type', 'recorded_at', 'photo_path', 'station_code', 'status',
     ];
 
+    protected $hidden = ['photo_path'];
+
     protected $casts = [
         'attendance_date' => 'date:Y-m-d',
         'recorded_at' => 'datetime',

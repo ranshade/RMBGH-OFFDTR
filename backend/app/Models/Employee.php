@@ -11,7 +11,6 @@ class Employee extends Model
         'employee_no', 'full_name', 'department', 'position', 'status', 'password',
     ];
 
-    // The password hash is never sent to the browser; admins only get `has_password`.
     protected $hidden = ['password'];
 
     public function getHasPasswordAttribute(): bool

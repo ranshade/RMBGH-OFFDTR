@@ -9,6 +9,8 @@ use App\Models\Employee;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -29,7 +31,6 @@ class AttendanceController extends Controller
 
         $ranged = !empty($validated['from']) && !empty($validated['to']);
         if ($ranged) {
-            // Cut-off period (e.g. 26th to 25th) - filter by attendance date.
             $query->whereBetween('attendance_date', [$validated['from'], $validated['to']]);
         } elseif (!empty($validated['date'])) {
             $query->whereDate('attendance_date', $validated['date']);
@@ -41,10 +42,6 @@ class AttendanceController extends Controller
         return response()->json($query->limit($ranged ? 20000 : 500)->get());
     }
 
-    /**
-     * Read-only view for a signed-in employee: their own punches for a date range.
-     * No photos and no other employees are exposed; the range is capped.
-     */
     public function mine(Request $request)
     {
         $validated = $request->validate([
@@ -52,7 +49,6 @@ class AttendanceController extends Controller
             'to' => ['required', 'date_format:Y-m-d', 'after_or_equal:from'],
         ]);
 
-        // Set by the `employee` middleware from the signed-in token: an employee only ever sees their own punches.
         $employee = $request->attributes->get('employee');
 
         if (abs(Carbon::parse($validated['from'])->diffInDays(Carbon::parse($validated['to']))) > 45) {
@@ -65,7 +61,6 @@ class AttendanceController extends Controller
             ->orderBy('id')
             ->get(['event_type', 'recorded_at', 'attendance_date']);
 
-        // OFF / HOLIDAY / SUSPENDED markers so the employee's printed DTR matches the official one.
         try {
             $marks = DtrDayMark::whereIn('scope', [$employee->employee_no, '*'])
                 ->whereBetween('mark_date', [$validated['from'], $validated['to']])
@@ -77,7 +72,7 @@ class AttendanceController extends Controller
                 ])
                 ->values();
         } catch (\Throwable $e) {
-            $marks = collect(); // marks table not migrated yet
+            $marks = collect(); 
         }
 
         return response()->json([
@@ -87,10 +82,6 @@ class AttendanceController extends Controller
         ]);
     }
 
-    /**
-     * Admin: correct the time, the event (TIME IN / TIME OUT) and/or the employee ID of one punch.
-     * `recorded_at` is the local (application timezone) date and time, e.g. 2026-10-12T14:03.
-     */
     public function update(Request $request, string $uuid)
     {
         $validated = $request->validate([
@@ -101,7 +92,6 @@ class AttendanceController extends Controller
 
         $log = AttendanceLog::where('record_uuid', $uuid)->firstOrFail();
 
-        // Wrong ID punched? Move this punch to the right employee.
         $owner = [];
         if (!empty($validated['employee_no']) && $validated['employee_no'] !== $log->employee_no_snapshot) {
             $employee = Employee::where('employee_no', $validated['employee_no'])->first();
@@ -126,7 +116,6 @@ class AttendanceController extends Controller
         return response()->json($log->fresh()->load('employee:id,employee_no,full_name'));
     }
 
-    /** Admin: add a missing punch (e.g. forgotten time out). It has no photo and is flagged as manual. */
     public function storeManual(Request $request)
     {
         $validated = $request->validate([
@@ -160,9 +149,6 @@ class AttendanceController extends Controller
         return response()->json($log->load('employee:id,employee_no,full_name'), 201);
     }
 
-    /**
-     * Serve the photo captured for one attendance record (super admin only; files are stored privately).
-     */
     public function photo(string $uuid)
     {
         $log = AttendanceLog::where('record_uuid', $uuid)->firstOrFail();
@@ -176,10 +162,6 @@ class AttendanceController extends Controller
         ]);
     }
 
-    /**
-     * Tell the kiosk which event is expected next for an employee.
-     * Legacy AM/PM event values are supported while older records remain in the database.
-     */
     public function nextEvent(Request $request)
     {
         $validated = $request->validate([
@@ -209,6 +191,7 @@ class AttendanceController extends Controller
     {
         $validated = $request->validate([
             'employee_no' => ['required', 'string', 'max:50'],
+            'password' => ['required', 'string', 'max:100'],
             'device_time' => ['nullable', 'date'],
             'station_code' => ['nullable', 'string', 'max:50'],
             'photo' => ['required', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
@@ -222,7 +205,23 @@ class AttendanceController extends Controller
             return response()->json(['message' => 'Active employee not found.'], 422);
         }
 
-        // Use the kiosk's timestamp when provided; store it in the application's configured timezone.
+        $throttleKey = 'attendance-punch:' . $request->ip() . '|' . strtolower($employee->employee_no);
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            return response()->json(['message' => "Too many wrong passcodes. Try again in {$seconds} seconds."], 429);
+        }
+
+        if (empty($employee->password)) {
+            return response()->json(['message' => 'No passcode has been set for you yet. Please ask the admin.'], 422);
+        }
+
+        if (!Hash::check($validated['password'], $employee->password)) {
+            RateLimiter::hit($throttleKey, 60);
+            return response()->json(['message' => 'Incorrect passcode.'], 422);
+        }
+
+        RateLimiter::clear($throttleKey);
+
         $recordedAt = isset($validated['device_time'])
             ? Carbon::parse($validated['device_time'])->setTimezone(config('app.timezone'))
             : now();
@@ -238,7 +237,6 @@ class AttendanceController extends Controller
 
         try {
             $result = DB::transaction(function () use ($employee, $date, $recordedAt, $validated, $path, $uuid) {
-                // Lock the employee row so two quick requests cannot both choose the same next event.
                 $lockedEmployee = Employee::whereKey($employee->id)->lockForUpdate()->firstOrFail();
 
                 $latest = AttendanceLog::where('employee_id', $lockedEmployee->id)
@@ -247,7 +245,6 @@ class AttendanceController extends Controller
                     ->lockForUpdate()
                     ->first();
 
-                // Prevent accidental repeat punches within the configured gap.
                 $gap = (int) config('attendance.min_gap_minutes');
                 $recent = $gap > 0
                     ? AttendanceLog::where('employee_id', $lockedEmployee->id)
@@ -302,12 +299,6 @@ class AttendanceController extends Controller
         }
     }
 
-    /**
-     * Decide the next punch from the employee's last record (not from AM/PM or the clock time),
-     * so 8-hour, 12-hour and overnight shifts all work: IN -> OUT -> IN -> ...
-     * Exception: if the last punch was a TIME IN that is older than the longest expected shift,
-     * the time-out was forgotten, so the next punch starts a new shift (TIME IN).
-     */
     private function nextEventAfter(?string $lastEvent, $lastAt = null, $now = null): string
     {
         if (!$lastEvent) {
@@ -320,7 +311,7 @@ class AttendanceController extends Controller
             if ($lastAt && $now) {
                 $hours = Carbon::parse($lastAt)->diffInMinutes(Carbon::parse($now), false) / 60;
                 if ($hours > (int) config('attendance.max_shift_hours')) {
-                    return 'TIME IN'; // missed time-out
+                    return 'TIME IN'; 
                 }
             }
             return 'TIME OUT';
@@ -330,7 +321,6 @@ class AttendanceController extends Controller
             return 'TIME IN';
         }
 
-        // Unknown legacy values are handled conservatively as a new shift's first punch.
         return 'TIME IN';
     }
 }

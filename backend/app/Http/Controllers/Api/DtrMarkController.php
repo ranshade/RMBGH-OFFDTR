@@ -10,7 +10,6 @@ use Illuminate\Validation\Rule;
 
 class DtrMarkController extends Controller
 {
-    /** Marks inside a cut-off period. */
     public function index(Request $request)
     {
         $validated = $request->validate([
@@ -29,10 +28,6 @@ class DtrMarkController extends Controller
         return response()->json($marks->values());
     }
 
-    /**
-     * Set or clear marks in bulk. A null/empty type clears the mark.
-     * Body: { marks: [{ scope: "EMP-001" | "*", date: "2026-08-03", type: "OFF" | "HOLIDAY" | "SUSPENDED" | null }] }
-     */
     public function update(Request $request)
     {
         $validated = $request->validate([
@@ -44,8 +39,6 @@ class DtrMarkController extends Controller
 
         DB::transaction(function () use ($validated) {
             foreach ($validated['marks'] as $m) {
-                // OFF belongs to one employee. HOLIDAY / SUSPENDED can be for everyone ('*') or for one employee
-                // (the hospital runs on holidays, so only some staff are off).
                 if (($m['type'] ?? null) === 'OFF' && $m['scope'] === '*') {
                     continue;
                 }

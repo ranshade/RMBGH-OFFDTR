@@ -30,7 +30,6 @@ class EmployeeAuthController extends Controller
             return response()->json(['message' => 'No password has been set for you yet. Please ask the admin.'], 422);
         }
 
-        // Always run a hash check so a wrong ID and a wrong password take the same time.
         $ok = Hash::check($validated['password'], $employee->password ?? Hash::make('not-a-real-password'));
         if (!$employee || !$ok) {
             RateLimiter::hit($throttleKey, 60);

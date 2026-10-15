@@ -20,7 +20,6 @@ class AttendanceReportController extends Controller
 
         return response()->streamDownload(function () use ($validated) {
             $out = fopen('php://output', 'w');
-            // UTF-8 BOM helps Excel display names correctly.
             fwrite($out, "\xEF\xBB\xBF");
             fputcsv($out, ['Record UUID', 'Employee No', 'Employee Name', 'Attendance Date', 'Event', 'Recorded At', 'Station', 'Status']);
 

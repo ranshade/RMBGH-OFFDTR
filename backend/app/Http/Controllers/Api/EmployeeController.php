@@ -20,7 +20,6 @@ class EmployeeController extends Controller
         $search = trim((string) $request->query('search', ''));
         $query = Employee::query();
         if ($request->boolean('all')) {
-            // Full directory (including inactive) is for the super admin only.
             if (!AdminToken::valid($request)) {
                 return response()->json(['message' => 'Super admin login required.'], 401);
             }
@@ -38,7 +37,7 @@ class EmployeeController extends Controller
 
         $rows = $query->orderBy('full_name')->limit(500)->get();
         if ($request->boolean('all')) {
-            $rows->each->append('has_password'); // admin only: who can sign in to My DTR
+            $rows->each->append('has_password'); 
         }
 
         return response()->json($rows);
@@ -52,8 +51,8 @@ class EmployeeController extends Controller
             'department' => ['nullable', 'string', 'max:120'],
             'position' => ['nullable', 'string', 'max:120'],
             'status' => ['sometimes', Rule::in(['active', 'inactive'])],
-            'password' => ['nullable', 'string', 'min:6', 'max:100'], // blank = keep the current password
-        ]);
+            'password' => ['nullable', 'digits:3'], 
+        ], ['password.digits' => 'The passcode must be exactly 3 digits.']);
 
         if (!empty($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);
@@ -67,13 +66,12 @@ class EmployeeController extends Controller
             $employee->update($validated);
             $newNo = $employee->employee_no;
 
-            // The ID changed: carry the employee's history (punches and OFF marks) over to the new ID.
             if ($newNo !== $oldNo) {
                 AttendanceLog::where('employee_id', $employee->id)->update(['employee_no_snapshot' => $newNo]);
 
                 if (Schema::hasTable('dtr_day_marks')) {
                     if (strcasecmp($newNo, $oldNo) !== 0) {
-                        DtrDayMark::where('scope', $newNo)->delete(); // leftovers of an ID that is no longer used
+                        DtrDayMark::where('scope', $newNo)->delete(); 
                     }
                     DtrDayMark::where('scope', $oldNo)->update(['scope' => $newNo]);
                 }
@@ -91,8 +89,8 @@ class EmployeeController extends Controller
             'department' => ['nullable', 'string', 'max:120'],
             'position' => ['nullable', 'string', 'max:120'],
             'status' => ['nullable', Rule::in(['active', 'inactive'])],
-            'password' => ['nullable', 'string', 'min:6', 'max:100'],
-        ]);
+            'password' => ['nullable', 'digits:3'],
+        ], ['password.digits' => 'The passcode must be exactly 3 digits.']);
 
         $validated['status'] = $validated['status'] ?? 'active';
         if (!empty($validated['password'])) {

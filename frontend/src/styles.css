@@ -34,48 +34,54 @@
 /* ===== DTR - Civil Service Form No. 48 ===== */
 .dtr-stage { overflow-x: auto; }
 .dtr-sheet {
-  width: 210mm; margin: 0 auto 16px; padding: 10mm; box-sizing: border-box;
+  width: 210mm; margin: 0 auto 16px; padding: 5mm; box-sizing: border-box;
   background: #fff; color: #000; box-shadow: 0 1px 8px rgba(15, 23, 42, .22);
-  font-family: Arial, Helvetica, sans-serif; font-size: 7.5pt; line-height: 1.2;
+  font-family: "Times New Roman", Times, serif; line-height: 1.2;
 }
-.dtr-panels { display: flex; gap: 6mm; }
-.dtr-panel { flex: 1 1 0; min-width: 0; }
-.dtr-formno { font-size: 6pt; color: #333; }
-.dtr-title { text-align: center; font-weight: 700; font-size: 10.5pt; margin: 2.5mm 0 3mm; }
-.dtr-name { text-align: center; font-size: 9pt; border-bottom: 1px solid #000; min-height: 4.5mm; padding-bottom: .4mm; }
-.dtr-namelabel { text-align: center; font-weight: 700; font-size: 8pt; margin-bottom: 2.5mm; }
-.dtr-field { display: flex; gap: 1.5mm; align-items: baseline; margin-top: .6mm; }
-.dtr-field > span { white-space: nowrap; }
-.dtr-field > b { flex: 1; font-weight: 400; border-bottom: 1px solid #000; min-height: 3.6mm; padding-left: 1mm; white-space: nowrap; overflow: hidden; }
-.dtr-field.dtr-right { justify-content: flex-end; }
-.dtr-field.dtr-right > b { flex: 0 0 48%; }
-.dtr-table { width: 100%; table-layout: fixed; border-collapse: collapse; margin-top: 2.5mm; border: 1.3px solid #000; }
-.dtr-table th, .dtr-table td { border: .5pt solid #000; text-align: center; padding: 0 .5mm; white-space: nowrap; overflow: hidden; }
-.dtr-table th { font-size: 6.5pt; font-weight: 700; height: 3.8mm; }
-.dtr-table td { font-size: 7pt; height: 4.4mm; }
-.dtr-table td.dtr-day { font-size: 6.5pt; }
+.dtr-panels { display: flex; justify-content: center; gap: 2mm; }
+.dtr-panel { flex: 1 1 0; min-width: 0; max-width: 99mm; box-sizing: border-box; padding: 2mm 1mm 0; }
+.dtr-formno { margin-bottom: 8px; font-size: 10px; font-weight: 700; line-height: 1.1; }
+.dtr-title { margin-bottom: 10px; text-align: center; font-size: 17px; font-weight: 700; letter-spacing: .5px; line-height: 1.2; }
+.dtr-name { text-align: center; }
+.dtr-name span { display: inline-block; max-width: 100%; min-height: 13px; padding: 0 10px 2px; border-bottom: 1.5px solid #000; font-size: 12px; font-weight: 700; letter-spacing: .2px; line-height: 1.1; text-transform: uppercase; }
+.dtr-namelabel { margin: 6px 0 10px; text-align: center; font-size: 11px; font-weight: 700; letter-spacing: .5px; }
+.dtr-field { display: flex; align-items: flex-end; gap: 4px; margin-bottom: 4px; }
+.dtr-field > span { flex: 0 0 46%; padding-bottom: 1px; font-size: 9.5px; font-weight: 700; line-height: 1.15; }
+.dtr-field-text { flex: 1; display: flex; justify-content: center; align-items: flex-end; }
+.dtr-field-text i { padding-bottom: 1px; border-bottom: 1px solid #000; font-style: normal; font-size: 9.5px; font-weight: 700; line-height: 1.2; }
+.dtr-field-line { flex: 1; display: block; min-height: 18px; border-bottom: 1px solid #000; }
+
+.dtr-sheet .dtr-table { width: 100%; table-layout: fixed; border-collapse: collapse; margin-top: 8px; border: 2px solid #000; background: transparent; }
+.dtr-sheet .dtr-table thead { background: transparent; }
+.dtr-sheet .dtr-table th, .dtr-sheet .dtr-table td { padding: 1px 2px; border: 1px solid #000; text-align: center; white-space: nowrap; overflow: hidden; color: #000; font-size: 10px; letter-spacing: 0; text-transform: none; }
+.dtr-sheet .dtr-table th { font-weight: 700; }
+.dtr-sheet .dtr-table .dtr-blank-head { height: 16px; }
+.dtr-sheet .dtr-table td { height: 18px; padding: 0 2px; }
+.dtr-sheet .dtr-table td.dtr-day { font-weight: 700; }
+.dtr-sheet .dtr-table td.dtr-merged { font-weight: 700; letter-spacing: .02em; }
+.dtr-sheet .dtr-table tbody tr:hover { background: transparent; }
 .dtr-day button { all: unset; display: block; width: 100%; font: inherit; text-align: center; cursor: pointer; }
-.dtr-off { color: #000; }
-.dtr-merged { font-weight: 700; letter-spacing: .02em; }
-.dtr-cert { margin: 2.5mm 0 0 3mm; font-size: 6.5pt; line-height: 1.35; }
-.dtr-sign { width: 62%; margin: 9mm auto 0; text-align: center; }
-.dtr-sign-line { border-top: 1px solid #000; }
-.dtr-sign-label { font-weight: 700; font-size: 8pt; margin-top: .5mm; }
-.dtr-sign-note { font-size: 6.5pt; }
-.dtr-head { width: 80%; margin: 11mm auto 0; padding-top: .6mm; border-top: 1px solid #000; font-weight: 700; font-size: 8pt; }
-.dtr-head-title { font-size: 6.5pt; }
+.dtr-cert { min-height: 34px; margin: 10px 0 0; padding: 0 2px; text-indent: 32px; font-size: 9px; font-style: italic; line-height: 1.25; }
+
+.dtr-sign { display: flex; flex-direction: column; align-items: center; margin-top: 4mm; text-align: center; break-inside: avoid; page-break-inside: avoid; }
+.dtr-sign-block { display: flex; flex-direction: column; align-items: center; width: 100%; }
+.dtr-sign-space { height: 8mm; }
+.dtr-sign-name { display: inline-block; min-width: 120px; max-width: 100%; padding: 0 8px 2px; border-bottom: 1px solid #000; font-size: 11px; font-weight: 700; letter-spacing: .2px; line-height: 1.2; text-transform: uppercase; }
+.dtr-sign-caption { min-height: 14px; margin-top: 4px; font-size: 11px; letter-spacing: .2px; text-transform: uppercase; }
+.dtr-sign-note { font-size: 10px; line-height: 1.4; }
+.dtr-sign-gap { height: 3mm; }
 
 @media screen {
-  .dtr-table tr.dtr-edit:hover td { background: #e0f2fe; }
+  .dtr-sheet .dtr-table tr.dtr-edit:hover td { background: #e0f2fe; }
 }
-@page { margin: 10mm; }
+@page { margin: 5mm; }
 @media print {
   html, body { background: #fff !important; min-width: 0; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .dtr-stage { overflow: visible; }
-  .dtr-sheet { width: auto; margin: 0; padding: 0 .5mm 0 0; box-shadow: none; break-after: page; page-break-after: always; }
+  .dtr-sheet { width: auto; max-width: 200mm; margin: 0 auto; padding: 0; box-shadow: none; break-after: page; page-break-after: always; }
   .dtr-sheet:last-child { break-after: auto; page-break-after: auto; }
-  .dtr-table tr { break-inside: avoid; }
+  .dtr-sheet .dtr-table tr { break-inside: avoid; }
 }
 
 

@@ -1,11 +1,10 @@
-/** @type {import('tailwindcss').Config} */
 const c = (v) => `hsl(var(--${v}) / <alpha-value>)`;
 
 export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
     extend: {
-      maxWidth: { '9xl': '100%' }, // full-width layout (kept from your edit)
+      maxWidth: { '9xl': '100%' },
       colors: {
         border: c('border'),
         input: c('input'),

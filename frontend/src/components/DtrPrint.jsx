@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { adminFetch } from '../lib';
 import { Button } from './ui/button';
-import { Input, Label, Select } from './ui/input';
+import { Input, Label } from './ui/input';
 import { Alert } from './ui/alert';
 import { Badge } from './ui/badge';
 import { Dialog } from './ui/dialog';
@@ -35,33 +35,46 @@ function initialEnd() {
 }
 
 /* ------------------------------------------------------------------ one half of the form */
+const clock = (v) => (v ? v.replace(/^(\d):/, '0$1:') : '');
+const dayLabel = (n) => String(n).padStart(2, '0');
+
+function Field({ label, value }) {
+  return (
+    <div className="dtr-field">
+      <span>{label}</span>
+      {value
+        ? <b className="dtr-field-text"><i>{value}</i></b>
+        : <b className="dtr-field-line">&nbsp;</b>}
+    </div>
+  );
+}
+
 function Panel({ emp, panel, settings, onPick }) {
   return (
     <div className="dtr-panel">
       <div className="dtr-formno">Civil Service Form No. 48</div>
       <div className="dtr-title">DAILY TIME RECORD</div>
-      <div className="dtr-name">{emp.name}</div>
+      <div className="dtr-name"><span>{emp.name || '\u00a0'}</span></div>
       <div className="dtr-namelabel">NAME</div>
-      <div className="dtr-field"><span>For the Month of:</span><b>{panel.label}</b></div>
-      <div className="dtr-field"><span>Official Hours:</span><b>{settings.official}</b></div>
-      <div className="dtr-field"><span>For Arrival &amp; Departure Regular Days:</span><b>{settings.regularDays}</b></div>
-      <div className="dtr-field dtr-right"><span>Saturdays:</span><b>{settings.saturdays}</b></div>
+
+      <Field label="For the month of" value={panel.label} />
+      <Field label="Official Hours:" value={settings.official} />
+      <Field label="For Arrival & Departure Days:" value={settings.regularDays} />
+      <Field label="Saturdays:" value={settings.saturdays} />
 
       <table className="dtr-table">
-        <colgroup>
-          <col style={{ width: '8%' }} />
-          <col style={{ width: '17%' }} /><col style={{ width: '17%' }} /><col style={{ width: '17%' }} /><col style={{ width: '17%' }} />
-          <col style={{ width: '12%' }} /><col style={{ width: '12%' }} />
-        </colgroup>
         <thead>
           <tr>
-            <th rowSpan={2}>Days</th>
+            <th rowSpan={3}>Days</th>
+            <th colSpan={6} className="dtr-blank-head" />
+          </tr>
+          <tr>
             <th colSpan={2}>Morning</th>
             <th colSpan={2}>Afternoon</th>
             <th colSpan={2}>Overtime</th>
           </tr>
           <tr>
-            <th>Arrived</th><th>Departure</th><th>Arrived</th><th>Departure</th><th>Hours</th><th>Minutes</th>
+            <th>Arrived</th><th>Departure</th><th>Arrived</th><th>Departure</th><th>Hours</th><th>minutes</th>
           </tr>
         </thead>
         <tbody>
@@ -69,21 +82,30 @@ function Panel({ emp, panel, settings, onPick }) {
             <tr key={r.day} className={r.inRange && onPick ? 'dtr-edit' : ''}>
               <td className="dtr-day">
                 {r.inRange && onPick
-                  ? <button type="button" title="Mark OFF / Holiday / Suspended" onClick={() => onPick(emp, r)}>{r.day}</button>
-                  : r.day}
+                  ? <button type="button" title="Mark OFF / Holiday / Suspended" onClick={() => onPick(emp, r)}>{dayLabel(r.day)}</button>
+                  : dayLabel(r.day)}
               </td>
               {!r.inRange && <><td /><td /><td /><td /></>}
-              {r.inRange && r.full === 'OFF' && ['a', 'b', 'c', 'd'].map((k) => <td key={k} className="dtr-off">OFF</td>)}
+              {r.inRange && r.full === 'OFF' && ['a', 'b', 'c', 'd'].map((k) => <td key={k}>OFF</td>)}
               {r.inRange && (r.full === 'HOLIDAY' || r.full === 'SUSPENDED') && <td colSpan={4} className="dtr-merged">{r.full}</td>}
-              {r.inRange && !r.full && ['mA', 'mD', 'aA', 'aD'].map((k) => (
-                <td key={k} className={r.cells[k] === 'OFF' ? 'dtr-off' : ''}>{r.cells[k]}</td>
-              ))}
+              {r.inRange && !r.full && ['mA', 'mD', 'aA', 'aD'].map((k) => <td key={k}>{clock(r.cells[k])}</td>)}
               <td /><td />
             </tr>
           ))}
         </tbody>
       </table>
       <p className="dtr-cert">{CERTIFICATION}</p>
+    </div>
+  );
+}
+
+function SignBlock({ name, caption, note }) {
+  return (
+    <div className="dtr-sign-block">
+      <div className="dtr-sign-space" />
+      <div className="dtr-sign-name">{name || '\u00a0'}</div>
+      <div className="dtr-sign-caption">{caption}</div>
+      {note && <div className="dtr-sign-note">{note}</div>}
     </div>
   );
 }
@@ -95,11 +117,9 @@ function Sheet({ emp, settings, onPick }) {
         {emp.panels.map((p) => <Panel key={p.label} emp={emp} panel={p} settings={settings} onPick={onPick} />)}
       </div>
       <div className="dtr-sign">
-        <div className="dtr-sign-line" />
-        <div className="dtr-sign-label">SIGNATURE</div>
-        <div className="dtr-sign-note">Verified as to the prescribed office hours.</div>
-        <div className="dtr-head">{settings.head}</div>
-        <div className="dtr-head-title">{settings.headTitle}</div>
+        <SignBlock name={emp.name} caption="SIGNATURE" note="Verified as to the prescribed office hours." />
+        <div className="dtr-sign-gap" />
+        <SignBlock name={settings.head} caption={settings.headTitle} />
       </div>
     </section>
   );

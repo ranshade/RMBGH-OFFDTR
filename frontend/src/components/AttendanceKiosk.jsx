@@ -28,19 +28,20 @@ export default function AttendanceKiosk() {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const idRef = useRef(null);
+  const passcodeRef = useRef(null);
   const photoUrlRef = useRef('');
   const lookupSeq = useRef(0);
 
-  const [cameraState, setCameraState] = useState('starting'); // starting | ready | error
+  const [cameraState, setCameraState] = useState('starting');
   const [employeeNo, setEmployeeNo] = useState('');
+  const [passcode, setPasscode] = useState('');
   const [employee, setEmployee] = useState(null);
-  const [lookup, setLookup] = useState('idle'); // idle | checking | notfound | error
+  const [lookup, setLookup] = useState('idle'); 
   const [nextEvent, setNextEvent] = useState('TIME IN');
   const [busy, setBusy] = useState(false);
   const [latest, setLatest] = useState(null);
   const [apiStatus, setApiStatus] = useState('Checking…');
 
-  // Camera is always on.
   const startCamera = useCallback(async () => {
     setCameraState('starting');
     try {
@@ -75,7 +76,6 @@ export default function AttendanceKiosk() {
     };
   }, [startCamera]);
 
-  // Identify the employee automatically while typing (and instantly on Enter).
   async function identify(raw) {
     const no = raw.trim();
     const seq = ++lookupSeq.current;
@@ -133,13 +133,18 @@ export default function AttendanceKiosk() {
       const blob = await captureFrame();
       const f = new FormData();
       f.append('employee_no', employee.employee_no);
+      f.append('password', passcode);
       f.append('device_time', new Date().toISOString());
       f.append('station_code', STATION);
       f.append('photo', blob, `${employee.employee_no}-${Date.now()}.jpg`);
 
       const r = await fetch(`${API}/attendance`, { method: 'POST', body: f, headers: { Accept: 'application/json' } });
       const d = await r.json();
-      if (!r.ok) throw new Error(d.message || 'Attendance was not saved.');
+      if (!r.ok) {
+        setPasscode('');
+        passcodeRef.current?.focus();
+        throw new Error(d.message || 'Attendance was not saved.');
+      }
 
       if (photoUrlRef.current) URL.revokeObjectURL(photoUrlRef.current);
       photoUrlRef.current = URL.createObjectURL(blob);
@@ -147,6 +152,7 @@ export default function AttendanceKiosk() {
       toast.success('Attendance saved successfully.');
       lookupSeq.current++;
       setEmployeeNo('');
+      setPasscode('');
       setEmployee(null);
       setLookup('idle');
       idRef.current?.focus();
@@ -157,7 +163,7 @@ export default function AttendanceKiosk() {
     }
   }
 
-  const canSave = !!employee && cameraState === 'ready' && !busy;
+  const canSave = !!employee && passcode.length === 3 && cameraState === 'ready' && !busy;
   const lookupText = { checking: 'Checking…', notfound: 'Employee not found or inactive. Contact the authorized administrator.', error: 'Cannot reach employee records. Check that Laravel and MySQL are running.' }[lookup];
 
   return (
@@ -166,7 +172,7 @@ export default function AttendanceKiosk() {
         <div className="flex flex-wrap items-center justify-between gap-3 border-b px-5 py-4 sm:px-6">
           <div>
             <h2 className="text-lg font-semibold tracking-tight">Attendance</h2>
-            <p className="text-sm text-muted-foreground">Enter your ID, face the camera, then confirm to save.</p>
+            <p className="text-sm text-muted-foreground">Enter your ID and passcode, face the camera, then confirm to save.</p>
           </div>
           <Clock />
         </div>
@@ -174,21 +180,40 @@ export default function AttendanceKiosk() {
         <div className="grid flex-1 lg:grid-cols-[minmax(0,1.6fr)_minmax(340px,1fr)]">
           {/* LEFT: ID + camera + confirm */}
           <div className="flex flex-col gap-4 p-5 sm:p-6">
-            <div className="space-y-2">
-              <Label htmlFor="employee-id">Employee ID Number</Label>
-              <form onSubmit={(e) => { e.preventDefault(); identify(employeeNo); }}>
+            <div className="grid gap-4 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+              <div className="space-y-2">
+                <Label htmlFor="employee-id">Employee ID Number</Label>
+                <form onSubmit={(e) => { e.preventDefault(); identify(employeeNo); }}>
+                  <Input
+                    id="employee-id"
+                    ref={idRef}
+                    autoFocus
+                    autoComplete="off"
+                    value={employeeNo}
+                    onChange={(e) => setEmployeeNo(e.target.value)}
+                    placeholder="Enter your employee ID number"
+                    className="h-12 text-base"
+                  />
+                </form>
+                <p className={`h-4 text-xs ${lookup === 'notfound' || lookup === 'error' ? 'text-destructive' : 'text-muted-foreground'}`}>{lookupText}</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="employee-passcode">Passcode</Label>
                 <Input
-                  id="employee-id"
-                  ref={idRef}
-                  autoFocus
+                  id="employee-passcode"
+                  ref={passcodeRef}
+                  type="password"
+                  inputMode="numeric"
                   autoComplete="off"
-                  value={employeeNo}
-                  onChange={(e) => setEmployeeNo(e.target.value)}
-                  placeholder="Enter your employee ID number"
+                  maxLength={3}
+                  value={passcode}
+                  onChange={(e) => setPasscode(e.target.value.replace(/\D/g, '').slice(0, 3))}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && canSave) confirmAndSave(); }}
+                  placeholder="3-digit passcode"
                   className="h-12 text-base"
                 />
-              </form>
-              <p className={`h-4 text-xs ${lookup === 'notfound' || lookup === 'error' ? 'text-destructive' : 'text-muted-foreground'}`}>{lookupText}</p>
+              </div>
             </div>
 
             {/* Always-on camera: fills the remaining height */}
@@ -240,7 +265,6 @@ export default function AttendanceKiosk() {
                 </Card>
               ) : latest ? (
                 <Card className="flex flex-1 flex-col overflow-hidden">
-                  {/* Photo fills whatever height is left, but is absolutely positioned so it never stretches the container */}
                   <div className="relative min-h-[180px] flex-1 bg-slate-900">
                     <img src={latest.photo} alt="Saved attendance" className="absolute inset-0 h-full w-full -scale-x-100 object-cover" />
                   </div>
@@ -258,7 +282,6 @@ export default function AttendanceKiosk() {
                         ['Time', new Date(latest.record.recorded_at).toLocaleTimeString()],
                         ['Station', latest.record.station_code || STATION],
                       ].map(([k, v]) => (
-                        // The time is what staff look for after punching, so it stands out in sky blue.
                         <div key={k} className={k === 'Time' ? 'flex items-center justify-between bg-sky-100 px-4 py-3.5' : 'flex justify-between px-4 py-2.5'}>
                           <dt className={k === 'Time' ? 'font-semibold text-sky-800' : 'text-muted-foreground'}>{k}</dt>
                           <dd className={k === 'Time' ? 'text-lg font-bold tabular-nums text-sky-900' : 'font-medium'}>{v}</dd>

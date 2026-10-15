@@ -18,14 +18,13 @@ const hm = (mins) => `${Math.floor(mins / 60)}h ${String(mins % 60).padStart(2, 
 
 const TOKEN_KEY = 'employee_token';
 
-/* An employee signs in with their ID + password (set by the admin) and sees only their own DTR. */
 export default function MyLogs() {
   const [idInput, setIdInput] = useState('');
   const [password, setPassword] = useState('');
   const [token, setToken] = useState(() => { try { return sessionStorage.getItem(TOKEN_KEY) || ''; } catch { return ''; } });
   const [signingIn, setSigningIn] = useState(false);
   const [end, setEnd] = useState(currentEnd);
-  const [data, setData] = useState(null); // { employee, logs }
+  const [data, setData] = useState(null); 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [settings, setSettings] = useState(loadSettings);
@@ -41,7 +40,6 @@ export default function MyLogs() {
     (async () => {
       setLoading(true);
       try {
-        // One extra day on each side so overnight shifts at the cut-off edges are paired correctly.
         const r = await fetch(`${API}/attendance/my?from=${ymd(addDays(from, -1))}&to=${ymd(addDays(to, 1))}`, { headers: { Accept: 'application/json', Authorization: `Bearer ${token}` } });
         const d = await r.json().catch(() => ({}));
         if (cancelled) return;
@@ -90,7 +88,6 @@ export default function MyLogs() {
     }
   }
 
-  // Pair each TIME IN with the next TIME OUT (listed under the date of the TIME IN).
   const rows = useMemo(() => {
     if (!data) return [];
     const punches = data.logs.map((l) => ({ out: isOutEvent(l.event_type), at: new Date(l.recorded_at) }));
@@ -107,7 +104,6 @@ export default function MyLogs() {
       .filter((x) => x.day >= fromStr && x.day <= toStr);
   }, [data, fromStr, toStr]);
 
-  // Same Civil Service Form No. 48 as the admin prints (night shifts: IN under PM, OUT under AM of the next day).
   const dtrEmp = useMemo(() => {
     if (!data) return null;
     const no = data.employee.employee_no;
@@ -125,7 +121,7 @@ export default function MyLogs() {
       <div>
         <p className="text-xs font-bold uppercase tracking-widest text-primary">Employee</p>
         <h2 className="mt-1 text-2xl font-bold tracking-tight">My DTR</h2>
-        <p className="mt-1 text-sm text-muted-foreground">{token ? 'Your own time in and time out, and your printable DTR.' : 'Sign in with your employee ID and the password from the admin.'}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{token ? 'Your own time in and time out, and your printable DTR.' : 'Sign in with your employee ID and your passcode.'}</p>
       </div>
 
       {!token && (
@@ -140,11 +136,11 @@ export default function MyLogs() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="my-pw">Password</Label>
-                <Input id="my-pw" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Your password" autoComplete="current-password" />
+                <Label htmlFor="my-pw">Passcode</Label>
+                <Input id="my-pw" type="password" inputMode="numeric" maxLength={3} value={password} onChange={(e) => setPassword(e.target.value.replace(/\D/g, '').slice(0, 3))} placeholder="Your 3-digit passcode" autoComplete="off" />
               </div>
-              <Button type="submit" className="w-full" disabled={!idInput.trim() || !password || signingIn}>{signingIn ? 'Signing in…' : 'Sign in'}</Button>
-              <p className="text-center text-xs text-muted-foreground">Forgot your password? Please ask the admin to set a new one.</p>
+              <Button type="submit" className="w-full" disabled={!idInput.trim() || password.length !== 3 || signingIn}>{signingIn ? 'Signing in…' : 'Sign in'}</Button>
+              <p className="text-center text-xs text-muted-foreground">Forgot your passcode? Please ask the admin to set a new one.</p>
             </form>
           </CardContent>
         </Card>

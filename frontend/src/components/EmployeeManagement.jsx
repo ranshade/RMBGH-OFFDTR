@@ -13,11 +13,10 @@ import { IconList, IconLock, IconPencil, IconPlus, IconSearch } from './ui/icons
 const emptyForm = { employee_no: '', full_name: '', status: 'active', password: '' };
 const initials = (n) => n.split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
 
-/* ---------- Management screen ---------- */
 export default function EmployeeManagement({ onLock, signOut }) {
   const [employees, setEmployees] = useState([]);
   const [search, setSearch] = useState('');
-  const [dialog, setDialog] = useState(null); // null | { mode: 'add' | 'edit', id? }
+  const [dialog, setDialog] = useState(null); 
   const [form, setForm] = useState(emptyForm);
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -26,7 +25,6 @@ export default function EmployeeManagement({ onLock, signOut }) {
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   const say = (text, type = 'success') => (type === 'error' ? toast.error(text) : toast.success(text));
 
-  // Wraps admin calls: an expired/invalid session sends the user back to the password screen.
   async function api(path, opts) {
     const r = await adminFetch(path, opts);
     if (r.status === 401) {
@@ -164,7 +162,7 @@ export default function EmployeeManagement({ onLock, signOut }) {
                       <div className="flex items-center gap-3">
                         <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${emp.status === 'active' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>{initials(emp.full_name)}</div>
                         <span className="font-medium">{emp.full_name}</span>
-                        {!emp.has_password && <Badge variant="secondary" className="px-1.5 text-[10px]">No password</Badge>}
+                        {!emp.has_password && <Badge variant="secondary" className="px-1.5 text-[10px]">No passcode</Badge>}
                       </div>
                     </TableCell>
                     <TableCell className="font-mono text-xs text-muted-foreground">{emp.employee_no}</TableCell>
@@ -202,10 +200,10 @@ export default function EmployeeManagement({ onLock, signOut }) {
             <Input id="emp-name" data-autofocus={dialog?.mode === 'edit' ? '' : undefined} required value={form.full_name} onChange={(e) => set('full_name', e.target.value)} placeholder="Employee full name" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="emp-pw">{dialog?.mode === 'edit' ? 'New password' : 'Password'}</Label>
-            <Input id="emp-pw" type={showPw ? 'text' : 'password'} autoComplete="new-password" minLength={6} value={form.password} onChange={(e) => set('password', e.target.value)} placeholder={dialog?.mode === 'edit' ? 'Leave blank to keep the current password' : 'At least 6 characters'} />
+            <Label htmlFor="emp-pw">{dialog?.mode === 'edit' ? 'New passcode' : 'Passcode'}</Label>
+            <Input id="emp-pw" type={showPw ? 'text' : 'password'} inputMode="numeric" autoComplete="off" minLength={3} maxLength={3} pattern="\d{3}" title="Exactly 3 digits" value={form.password} onChange={(e) => set('password', e.target.value.replace(/\D/g, '').slice(0, 3))} placeholder={dialog?.mode === 'edit' ? 'Leave blank to keep the current passcode' : '3 digits'} />
             <div className="flex items-center justify-between gap-3">
-              <p className="text-xs text-muted-foreground">The employee signs in to <b>My DTR</b> with their ID and this password. It opens their own DTR only.</p>
+              <p className="text-xs text-muted-foreground">3-digit passcode for <b>Time In / Time Out</b>. The employee also uses it to sign in to <b>My DTR</b> (own DTR only).</p>
               <label className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground"><input type="checkbox" checked={showPw} onChange={(e) => setShowPw(e.target.checked)} /> Show</label>
             </div>
           </div>

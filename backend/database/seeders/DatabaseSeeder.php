@@ -9,6 +9,8 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        $this->call(SuperAdminSeeder::class);
+
         // DEMO ONLY. Remove or change this before any real deployment.
         Employee::firstOrCreate(
             ['employee_no' => 'DEMO-001'],

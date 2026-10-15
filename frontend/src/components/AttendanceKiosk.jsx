@@ -25,6 +25,18 @@ function Clock() {
 
 const eventVariant = (ev) => (ev === 'TIME IN' ? 'default' : 'warning');
 
+const CAMERA_PREFERRED = { facingMode: 'user', width: { min: 1280, ideal: 1920 }, height: { min: 720, ideal: 1080 } };
+const CAMERA_FALLBACK = { facingMode: 'user', width: { ideal: 1920 }, height: { ideal: 1080 } };
+
+async function openCamera() {
+  try {
+    return await navigator.mediaDevices.getUserMedia({ video: CAMERA_PREFERRED, audio: false });
+  } catch (err) {
+    if (err.name !== 'OverconstrainedError') throw err;
+    return navigator.mediaDevices.getUserMedia({ video: CAMERA_FALLBACK, audio: false });
+  }
+}
+
 export default function AttendanceKiosk() {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
@@ -48,10 +60,7 @@ export default function AttendanceKiosk() {
     try {
       if (!navigator.mediaDevices?.getUserMedia) throw new Error('unsupported');
       streamRef.current?.getTracks().forEach((t) => t.stop());
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
-        audio: false,
-      });
+      const stream = await openCamera();
       streamRef.current = stream;
       stream.getVideoTracks()[0].onended = () => setCameraState('error');
       const v = videoRef.current;
@@ -273,7 +282,6 @@ export default function AttendanceKiosk() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <h4 className="truncate text-lg font-semibold tracking-tight">{latest.employee.full_name}</h4>
-                        <p className="text-sm text-muted-foreground">{latest.employee.employee_no}</p>
                       </div>
                       <Badge variant={eventVariant(latest.record.event_type)} className="shrink-0">{latest.record.event_type}</Badge>
                     </div>
@@ -281,7 +289,6 @@ export default function AttendanceKiosk() {
                       {[
                         ['Date', new Date(latest.record.recorded_at).toLocaleDateString()],
                         ['Time', new Date(latest.record.recorded_at).toLocaleTimeString()],
-                        ['Station', latest.record.station_code || STATION],
                       ].map(([k, v]) => (
                         <div key={k} className={k === 'Time' ? 'flex items-center justify-between bg-sky-50 px-4 py-3.5' : 'flex justify-between px-4 py-2.5'}>
                           <dt className={k === 'Time' ? 'font-semibold text-sky-700' : 'text-muted-foreground'}>{k}</dt>

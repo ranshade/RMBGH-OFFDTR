@@ -151,15 +151,23 @@ class AttendanceController extends Controller
 
     public function photo(string $uuid)
     {
-        $log = AttendanceLog::where('record_uuid', $uuid)->firstOrFail();
+        $log = AttendanceLog::with('photo')->where('record_uuid', $uuid)->firstOrFail();
 
-        if (!$log->photo_path || !Storage::disk('local')->exists($log->photo_path)) {
-            return response()->json(['message' => 'Photo not found.'], 404);
+        if ($log->photo) {
+            return response($log->photo->data, 200, [
+                'Content-Type' => $log->photo->mime_type,
+                'Cache-Control' => 'private, max-age=86400',
+                'X-Content-Type-Options' => 'nosniff',
+            ]);
         }
 
-        return Storage::disk('local')->response($log->photo_path, null, [
-            'Cache-Control' => 'private, max-age=86400',
-        ]);
+        if ($log->photo_path && Storage::disk('local')->exists($log->photo_path)) {
+            return Storage::disk('local')->response($log->photo_path, null, [
+                'Cache-Control' => 'private, max-age=86400',
+            ]);
+        }
+
+        return response()->json(['message' => 'Photo not found.'], 404);
     }
 
     public function nextEvent(Request $request)
@@ -228,75 +236,68 @@ class AttendanceController extends Controller
 
         $date = $recordedAt->toDateString();
         $uuid = (string) Str::uuid();
-        $extension = strtolower($request->file('photo')->extension() ?: 'jpg');
-        $path = $request->file('photo')->storeAs(
-            'private/attendance/' . $date,
-            $uuid . '.' . $extension,
-            'local'
-        );
+        $photo = $request->file('photo');
 
-        try {
-            $result = DB::transaction(function () use ($employee, $date, $recordedAt, $validated, $path, $uuid) {
-                $lockedEmployee = Employee::whereKey($employee->id)->lockForUpdate()->firstOrFail();
+        $result = DB::transaction(function () use ($employee, $date, $recordedAt, $validated, $photo, $uuid) {
+            $lockedEmployee = Employee::whereKey($employee->id)->lockForUpdate()->firstOrFail();
 
-                $latest = AttendanceLog::where('employee_id', $lockedEmployee->id)
+            $latest = AttendanceLog::where('employee_id', $lockedEmployee->id)
+                ->orderByDesc('recorded_at')
+                ->orderByDesc('id')
+                ->lockForUpdate()
+                ->first();
+
+            $gap = (int) config('attendance.min_gap_minutes');
+            $recent = $gap > 0
+                ? AttendanceLog::where('employee_id', $lockedEmployee->id)
+                    ->where('recorded_at', '>=', $recordedAt->copy()->subMinutes($gap))
+                    ->where('recorded_at', '<=', $recordedAt->copy()->addSeconds(5))
                     ->orderByDesc('recorded_at')
-                    ->orderByDesc('id')
-                    ->lockForUpdate()
-                    ->first();
+                    ->first()
+                : null;
 
-                $gap = (int) config('attendance.min_gap_minutes');
-                $recent = $gap > 0
-                    ? AttendanceLog::where('employee_id', $lockedEmployee->id)
-                        ->where('recorded_at', '>=', $recordedAt->copy()->subMinutes($gap))
-                        ->where('recorded_at', '<=', $recordedAt->copy()->addSeconds(5))
-                        ->orderByDesc('recorded_at')
-                        ->first()
-                    : null;
-
-                if ($recent) {
-                    $wait = max(1, (int) ceil($gap - $recent->recorded_at->diffInSeconds($recordedAt, false) / 60));
-                    return [
-                        'conflict' => true,
-                        'message' => "Attendance was already recorded at {$recent->recorded_at->format('h:i A')}. Please wait about {$wait} minute(s) before punching again.",
-                    ];
-                }
-
-                $event = $this->nextEventAfter($latest?->event_type, $latest?->recorded_at, $recordedAt);
-
-                $log = AttendanceLog::create([
-                    'record_uuid' => $uuid,
-                    'employee_id' => $lockedEmployee->id,
-                    'employee_no_snapshot' => $lockedEmployee->employee_no,
-                    'attendance_date' => $date,
-                    'event_type' => $event,
-                    'recorded_at' => $recordedAt,
-                    'photo_path' => $path,
-                    'station_code' => $validated['station_code'] ?? 'LOCAL-01',
-                    'status' => 'recorded',
-                ]);
-
-                return ['conflict' => false, 'log' => $log, 'employee' => $lockedEmployee];
-            });
-
-            if ($result['conflict']) {
-                Storage::disk('local')->delete($path);
-                return response()->json(['message' => $result['message']], 409);
+            if ($recent) {
+                $wait = max(1, (int) ceil($gap - $recent->recorded_at->diffInSeconds($recordedAt, false) / 60));
+                return [
+                    'conflict' => true,
+                    'message' => "Attendance was already recorded at {$recent->recorded_at->format('h:i A')}. Please wait about {$wait} minute(s) before punching again.",
+                ];
             }
 
-            return response()->json([
-                'message' => 'Attendance recorded successfully.',
-                'record' => $result['log'],
-                'employee' => [
-                    'employee_no' => $result['employee']->employee_no,
-                    'full_name' => $result['employee']->full_name,
-                ],
-                'next_event' => $this->nextEventAfter($result['log']->event_type, $result['log']->recorded_at, $result['log']->recorded_at),
-            ], 201);
-        } catch (\Throwable $e) {
-            Storage::disk('local')->delete($path);
-            throw $e;
+            $event = $this->nextEventAfter($latest?->event_type, $latest?->recorded_at, $recordedAt);
+
+            $log = AttendanceLog::create([
+                'record_uuid' => $uuid,
+                'employee_id' => $lockedEmployee->id,
+                'employee_no_snapshot' => $lockedEmployee->employee_no,
+                'attendance_date' => $date,
+                'event_type' => $event,
+                'recorded_at' => $recordedAt,
+                'station_code' => $validated['station_code'] ?? 'LOCAL-01',
+                'status' => 'recorded',
+            ]);
+
+            $log->photo()->create([
+                'mime_type' => $photo->getMimeType(),
+                'data' => file_get_contents($photo->getRealPath()),
+            ]);
+
+            return ['conflict' => false, 'log' => $log, 'employee' => $lockedEmployee];
+        });
+
+        if ($result['conflict']) {
+            return response()->json(['message' => $result['message']], 409);
         }
+
+        return response()->json([
+            'message' => 'Attendance recorded successfully.',
+            'record' => $result['log'],
+            'employee' => [
+                'employee_no' => $result['employee']->employee_no,
+                'full_name' => $result['employee']->full_name,
+            ],
+            'next_event' => $this->nextEventAfter($result['log']->event_type, $result['log']->recorded_at, $result['log']->recorded_at),
+        ], 201);
     }
 
     private function nextEventAfter(?string $lastEvent, $lastAt = null, $now = null): string

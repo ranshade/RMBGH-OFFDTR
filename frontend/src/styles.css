@@ -506,7 +506,8 @@ body {
 .app-view-kiosk .attendance-main video {
   border-radius: 10px;
 }
-.app-view-kiosk #employee-id {
+.app-view-kiosk #employee-id,
+.app-view-kiosk #employee-passcode {
   min-height: 52px;
   border-radius: 10px;
   font-size: 17px;

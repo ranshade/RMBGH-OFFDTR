@@ -5,6 +5,7 @@ import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { Input, Label } from './ui/input';
 import { toast } from 'sonner';
+import { IconCheck } from './ui/icons';
 
 function Clock() {
   const [now, setNow] = useState(new Date());
@@ -14,7 +15,7 @@ function Clock() {
   }, []);
   return (
     <div className="text-right">
-      <p className="text-xl font-bold tabular-nums tracking-tight">{now.toLocaleTimeString()}</p>
+      <p className="text-xl font-semibold tabular-nums tracking-tight">{now.toLocaleTimeString()}</p>
       <p className="text-xs text-muted-foreground">
         {now.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
       </p>
@@ -248,16 +249,16 @@ export default function AttendanceKiosk() {
 
           {/* RIGHT: attendance result */}
           <div className="flex flex-col border-t bg-muted/40 p-5 sm:p-6 lg:border-l lg:border-t-0">
-            <p className="text-xs font-semibold uppercase tracking-widest text-primary">{employee ? 'Employee identified' : 'Latest punch'}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">{employee ? 'Employee identified' : 'Latest punch'}</p>
             <h3 className="mt-1 text-lg font-semibold tracking-tight">Attendance Result</h3>
 
             <div className="mt-4 flex flex-1 flex-col">
               {employee ? (
                 <Card className="flex flex-1 flex-col items-center justify-center border-primary/30 px-6 py-10 text-center">
-                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-2xl font-bold text-primary">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-2xl font-semibold text-primary">
                     {employee.full_name.split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase()}
                   </div>
-                  <h4 className="mt-4 text-xl font-bold tracking-tight">{employee.full_name}</h4>
+                  <h4 className="mt-4 text-xl font-semibold tracking-tight">{employee.full_name}</h4>
                   <p className="mt-1 text-sm text-muted-foreground">{employee.employee_no}</p>
                   <p className="mt-6 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Next attendance event</p>
                   <Badge variant={eventVariant(nextEvent)} className="mt-1.5 px-5 py-1.5 text-lg">{nextEvent}</Badge>
@@ -271,7 +272,7 @@ export default function AttendanceKiosk() {
                   <div className="p-5">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <h4 className="truncate text-lg font-bold tracking-tight">{latest.employee.full_name}</h4>
+                        <h4 className="truncate text-lg font-semibold tracking-tight">{latest.employee.full_name}</h4>
                         <p className="text-sm text-muted-foreground">{latest.employee.employee_no}</p>
                       </div>
                       <Badge variant={eventVariant(latest.record.event_type)} className="shrink-0">{latest.record.event_type}</Badge>
@@ -282,9 +283,9 @@ export default function AttendanceKiosk() {
                         ['Time', new Date(latest.record.recorded_at).toLocaleTimeString()],
                         ['Station', latest.record.station_code || STATION],
                       ].map(([k, v]) => (
-                        <div key={k} className={k === 'Time' ? 'flex items-center justify-between bg-sky-100 px-4 py-3.5' : 'flex justify-between px-4 py-2.5'}>
-                          <dt className={k === 'Time' ? 'font-semibold text-sky-800' : 'text-muted-foreground'}>{k}</dt>
-                          <dd className={k === 'Time' ? 'text-lg font-bold tabular-nums text-sky-900' : 'font-medium'}>{v}</dd>
+                        <div key={k} className={k === 'Time' ? 'flex items-center justify-between bg-sky-50 px-4 py-3.5' : 'flex justify-between px-4 py-2.5'}>
+                          <dt className={k === 'Time' ? 'font-semibold text-sky-700' : 'text-muted-foreground'}>{k}</dt>
+                          <dd className={k === 'Time' ? 'text-lg font-semibold tabular-nums text-sky-900' : 'font-medium'}>{v}</dd>
                         </div>
                       ))}
                     </dl>
@@ -292,7 +293,7 @@ export default function AttendanceKiosk() {
                 </Card>
               ) : (
                 <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed bg-card px-6 py-10 text-center">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-xl text-primary">✓</div>
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent text-primary"><IconCheck width={22} height={22} /></div>
                   <h4 className="mt-3 font-semibold">No punch recorded yet</h4>
                   <p className="mt-2 max-w-xs text-sm leading-6 text-muted-foreground">Enter your employee ID and your name will appear here. After you confirm, the photo, punch type, date, and time are shown.</p>
                 </div>

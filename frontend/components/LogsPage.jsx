@@ -10,6 +10,7 @@ import { Alert } from './ui/alert';
 import { toast } from 'sonner';
 import { PunchPhoto, PhotoViewer } from './PunchPhoto';
 import { Dialog } from './ui/dialog';
+import { card, eyebrow, footNote, pageDesc, pageTitle, segment, segmentCurrent, th, tr } from './ui/theme';
 import { IconArrowLeft, IconCalendar, IconChevronLeft, IconChevronRight, IconDownload, IconLock, IconPencil, IconPrinter, IconSearch } from './ui/icons';
 
 /* Government DTR cut-off: 26th of the previous month up to the 25th of the period's month. */
@@ -36,11 +37,11 @@ const toLocalInput = (iso) => { const d = new Date(iso); return `${ymd(d)}T${pad
 
 function StatCard({ label, value, hint }) {
   return (
-    <Card>
-      <CardHeader tight><CardDescription className="font-medium">{label}</CardDescription></CardHeader>
+    <Card className={card}>
+      <CardHeader tight><CardDescription className="text-xs font-medium uppercase tracking-wider text-slate-500">{label}</CardDescription></CardHeader>
       <CardContent>
-        <p className="text-3xl font-bold tracking-tight">{value}</p>
-        <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
+        <p className="text-3xl font-semibold tabular-nums tracking-tight text-slate-900">{value}</p>
+        <p className="mt-1 text-xs text-slate-500">{hint}</p>
       </CardContent>
     </Card>
   );
@@ -218,12 +219,12 @@ export default function LogsPage({ onLock, signOut }) {
   const empty = (mode === 'dtr' ? !dtr.length : !filtered.length) && !error;
 
   return (
-    <main className="mx-auto w-full max-w-9xl space-y-5 px-4 py-6 sm:px-6">
+    <main className="mx-auto w-full max-w-9xl space-y-6 px-4 py-8 sm:px-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-primary">Admin</p>
-          <h2 className="mt-1 text-2xl font-bold tracking-tight">Attendance Logs</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Cut-off runs from the 26th to the 25th of each month for DTR submission.</p>
+          <p className={eyebrow}>Admin</p>
+          <h2 className={pageTitle}>Attendance Logs</h2>
+          <p className={pageDesc}>Cut-off runs from the 26th to the 25th of each month for DTR submission.</p>
         </div>
         <div className="flex items-center gap-3">
           <Badge>Super admin</Badge>
@@ -233,26 +234,26 @@ export default function LogsPage({ onLock, signOut }) {
       </div>
 
       {/* DTR cut-off card */}
-      <Card className="overflow-hidden">
+      <Card className={`${card} overflow-hidden`}>
         <div className="flex flex-wrap items-center justify-between gap-4 p-5 sm:px-6">
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><IconCalendar width={22} height={22} /></div>
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-sky-600"><IconCalendar width={20} height={20} /></div>
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <p className="text-sm font-medium text-muted-foreground">DTR cut-off · {monthLabel}</p>
+                <p className="text-sm font-medium text-slate-500">DTR cut-off · {monthLabel}</p>
                 {isLatest && <Badge>Current period</Badge>}
                 {status}
               </div>
-              <p className="mt-0.5 text-xl font-bold tracking-tight sm:text-2xl">{fmtLong(from)} <span className="font-normal text-muted-foreground">→</span> {fmtLong(to)}</p>
+              <p className="mt-1 text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">{fmtLong(from)} <span className="font-normal text-slate-400">to</span> {fmtLong(to)}</p>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex items-center rounded-lg border bg-card shadow-sm">
+            <div className={segment}>
               <Button variant="ghost" size="icon" className="rounded-r-none" onClick={() => setEnd((e) => shift(e, -1))} aria-label="Previous cut-off"><IconChevronLeft /></Button>
               <button
                 onClick={() => setEnd(currentPeriodEnd())}
                 disabled={isLatest}
-                className="h-9 border-x px-3 text-sm font-medium transition-colors hover:bg-accent disabled:cursor-default disabled:text-muted-foreground disabled:hover:bg-transparent"
+                className={segmentCurrent}
               >
                 Current
               </button>
@@ -264,16 +265,16 @@ export default function LogsPage({ onLock, signOut }) {
         </div>
       </Card>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-5 sm:grid-cols-3">
         <StatCard label="Employees with records" value={dtr.length} hint="In this cut-off" />
         <StatCard label="Total punches" value={filtered.length} hint="Time in and time out" />
         <StatCard label="Days with records" value={daysRecorded} hint="Employee-days logged" />
       </div>
 
-      <Card>
+      <Card className={card}>
         <CardHeader row>
           <div className="space-y-1.5">
-            <CardTitle className="text-lg">{mode === 'dtr' ? 'DTR summary' : 'All punches'}</CardTitle>
+            <CardTitle className="text-lg font-semibold text-slate-900">{mode === 'dtr' ? 'DTR summary' : 'All punches'}</CardTitle>
             <CardDescription>{loading ? 'Loading…' : `${fmtLong(from)} – ${fmtLong(to)}`}</CardDescription>
           </div>
           <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
@@ -286,27 +287,27 @@ export default function LogsPage({ onLock, signOut }) {
         </CardHeader>
         <CardContent className="p-0">
           {error && <div className="px-6 pb-4"><Alert variant="destructive">{error}</Alert></div>}
-          <div className="border-t">
+          <div className="border-t border-slate-200">
             {mode === 'dtr' ? (
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
-                    <TableHead className="pl-6">Employee</TableHead>
-                    <TableHead>Employee ID</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Time in</TableHead>
-                    <TableHead>Time out</TableHead>
-                    <TableHead className="pr-6">Hours</TableHead>
+                    <TableHead className={`${th} pl-6`}>Employee</TableHead>
+                    <TableHead className={th}>Employee ID</TableHead>
+                    <TableHead className={th}>Date</TableHead>
+                    <TableHead className={th}>Time in</TableHead>
+                    <TableHead className={th}>Time out</TableHead>
+                    <TableHead className={`${th} pr-6`}>Hours</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {dtr.flatMap((emp) =>
                     emp.rows.map((x, i) => (
-                      <TableRow key={`${emp.no}-${x.day}-${x.inP?.uuid || x.outP?.uuid}`} className={i === 0 ? 'border-t-2' : 'border-b-0'}>
+                      <TableRow key={`${emp.no}-${x.day}-${x.inP?.uuid || x.outP?.uuid}`} className={`${tr} ${i === 0 ? 'border-t border-slate-200' : 'border-b-0'}`}>
                         <TableCell className="py-2 pl-6">
                           {i === 0 && (
                             <div className="flex items-center gap-3">
-                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">{initials(emp.name)}</div>
+                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sky-50 text-xs font-semibold text-sky-700">{initials(emp.name)}</div>
                               <span className="font-medium">{emp.name}</span>
                             </div>
                           )}
@@ -325,16 +326,16 @@ export default function LogsPage({ onLock, signOut }) {
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
-                    <TableHead className="pl-6">Employee</TableHead>
-                    <TableHead>Photo</TableHead>
-                    <TableHead>Event</TableHead>
-                    <TableHead>Date &amp; time</TableHead>
-                    <TableHead className="pr-6">Station</TableHead>
+                    <TableHead className={`${th} pl-6`}>Employee</TableHead>
+                    <TableHead className={th}>Photo</TableHead>
+                    <TableHead className={th}>Event</TableHead>
+                    <TableHead className={th}>Date &amp; time</TableHead>
+                    <TableHead className={`${th} pr-6`}>Station</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filtered.map((l) => (
-                    <TableRow key={l.record_uuid}>
+                    <TableRow key={l.record_uuid} className={tr}>
                       <TableCell className="pl-6">
                         <div className="font-medium">{l.employee?.full_name || l.employee_no_snapshot}</div>
                         <div className="font-mono text-xs text-muted-foreground">{l.employee_no_snapshot}</div>
@@ -364,7 +365,7 @@ export default function LogsPage({ onLock, signOut }) {
             {empty && <p className="py-12 text-center text-sm text-muted-foreground">{loading ? 'Loading…' : 'No attendance records for this cut-off period.'}</p>}
           </div>
           {mode === 'dtr' && dtr.length > 0 && (
-            <p className="border-t px-6 py-2.5 text-xs text-muted-foreground">Each row is one shift: a TIME IN paired with the next TIME OUT, listed under the date of the TIME IN. A missing time in or out is shown as —.</p>
+            <p className={footNote}>Each row is one shift: a TIME IN paired with the next TIME OUT, listed under the date of the TIME IN. A missing time in or out is shown as —.</p>
           )}
         </CardContent>
       </Card>

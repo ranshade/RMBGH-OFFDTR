@@ -1,7 +1,7 @@
 import { cn } from './utils';
 
 export const Card = ({ className, ...p }) => (
-  <div className={cn('rounded-xl border bg-card text-card-foreground shadow-sm', className)} {...p} />
+  <div className={cn('rounded-xl border bg-card text-card-foreground', className)} {...p} />
 );
 // `row` lays the header out horizontally (title on the left, actions on the right).
 // `tight` removes the bottom padding (used for stat cards).

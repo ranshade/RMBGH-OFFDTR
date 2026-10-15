@@ -6,6 +6,7 @@ import { Input, Label } from './ui/input';
 import { Alert } from './ui/alert';
 import { Badge } from './ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { card, eyebrow, footNote, pageDesc, pageTitle, segment, segmentCurrent, th, tr } from './ui/theme';
 import { IconChevronLeft, IconChevronRight, IconPrinter, IconSearch } from './ui/icons';
 import { buildDtr, currentEnd, isOutEvent, periodFromEnd, shiftEnd, showsBreak, ymd } from '../dtr';
 import { Sheet, loadSettings } from './DtrPrint';
@@ -89,16 +90,16 @@ export default function MyLogs() {
   const total = rows.reduce((n, x) => n + (minutes(x) || 0), 0);
 
   return (
-    <main className="mx-auto w-full max-w-9xl space-y-5 px-4 py-6 print:p-0 sm:px-6">
+    <main className="mx-auto w-full max-w-9xl space-y-6 px-4 py-8 print:p-0 sm:px-6">
       <div className="space-y-5 print:hidden">
       <div>
-        <p className="text-xs font-bold uppercase tracking-widest text-primary">Employee</p>
-        <h2 className="mt-1 text-2xl font-bold tracking-tight">My Logs</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Enter your employee ID to see your own time in and time out.</p>
+        <p className={eyebrow}>Employee</p>
+        <h2 className={pageTitle}>My Logs</h2>
+        <p className={pageDesc}>Enter your employee ID to see your own time in and time out.</p>
       </div>
 
-      <Card>
-        <CardContent className="pt-6">
+      <Card className={card}>
+        <CardContent className="p-5 sm:p-6">
           <form onSubmit={submit} className="flex flex-wrap items-end gap-3">
             <div className="min-w-[14rem] flex-1 space-y-2">
               <Label htmlFor="my-id">Employee ID</Label>
@@ -115,10 +116,10 @@ export default function MyLogs() {
       {error && <Alert variant="destructive">{error}</Alert>}
 
       {data && (
-        <Card>
+        <Card className={card}>
           <CardHeader row>
             <div className="space-y-1.5">
-              <CardTitle className="text-lg">{data.employee.full_name}</CardTitle>
+              <CardTitle className="text-lg font-semibold text-slate-900">{data.employee.full_name}</CardTitle>
               <CardDescription>{data.employee.employee_no} · {fmtLong(from)} – {fmtLong(to)}</CardDescription>
             </div>
             <div className="flex flex-wrap items-center gap-3">
@@ -127,27 +128,27 @@ export default function MyLogs() {
                 <Input id="my-hours" className="w-44" value={settings.official} onChange={(e) => setSettings((s) => ({ ...s, official: e.target.value }))} />
               </div>
               <Button variant="outline" onClick={() => window.print()} disabled={!dtrEmp}><IconPrinter /> Print DTR</Button>
-            <div className="inline-flex items-center rounded-lg border bg-card shadow-sm">
+            <div className={segment}>
               <Button variant="ghost" size="icon" className="rounded-r-none" onClick={() => setEnd((e) => shiftEnd(e, -1))} aria-label="Previous cut-off"><IconChevronLeft /></Button>
-              <button onClick={() => setEnd(currentEnd())} disabled={isLatest} className="h-9 border-x px-3 text-sm font-medium hover:bg-accent disabled:cursor-default disabled:text-muted-foreground disabled:hover:bg-transparent">Current</button>
+              <button onClick={() => setEnd(currentEnd())} disabled={isLatest} className={segmentCurrent}>Current</button>
               <Button variant="ghost" size="icon" className="rounded-l-none" disabled={isLatest} onClick={() => setEnd((e) => shiftEnd(e, 1))} aria-label="Next cut-off"><IconChevronRight /></Button>
             </div>
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="border-t">
+            <div className="border-t border-slate-200">
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
-                    <TableHead className="pl-6">Date</TableHead>
-                    <TableHead>Time in</TableHead>
-                    <TableHead>Time out</TableHead>
-                    <TableHead className="pr-6">Hours</TableHead>
+                    <TableHead className={`${th} pl-6`}>Date</TableHead>
+                    <TableHead className={th}>Time in</TableHead>
+                    <TableHead className={th}>Time out</TableHead>
+                    <TableHead className={`${th} pr-6`}>Hours</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {rows.map((x) => (
-                    <TableRow key={`${x.day}-${(x.inP || x.outP).at.getTime()}`}>
+                    <TableRow key={`${x.day}-${(x.inP || x.outP).at.getTime()}`} className={tr}>
                       <TableCell className="pl-6">{fmtDay(x.day)}</TableCell>
                       <TableCell className="tabular-nums">{x.inP ? fmtTime(x.inP.at) : <span className="text-muted-foreground">—</span>}</TableCell>
                       <TableCell className="tabular-nums">
@@ -165,7 +166,7 @@ export default function MyLogs() {
               </Table>
               {!rows.length && <p className="py-10 text-center text-sm text-muted-foreground">{loading ? 'Loading…' : 'No records for this cut-off.'}</p>}
             </div>
-            {rows.length > 0 && <p className="border-t px-6 py-2.5 text-xs text-muted-foreground">Total hours (complete shifts): <b>{hm(total)}</b>. A missing time in or out is shown as —.</p>}
+            {rows.length > 0 && <p className={footNote}>Total hours (complete shifts): <b className="font-semibold text-slate-700">{hm(total)}</b>. A missing time in or out is shown as —.</p>}
           </CardContent>
         </Card>
       )}

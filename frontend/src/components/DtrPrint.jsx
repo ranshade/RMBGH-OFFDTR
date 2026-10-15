@@ -259,9 +259,9 @@ export default function DtrPrint({ onLock, signOut }) {
       <div className="space-y-5 print:hidden">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-primary">Admin</p>
-            <h2 className="mt-1 text-2xl font-bold tracking-tight">Print DTR</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Civil Service Form No. 48 · cut-off {fmtLong(from)} → {fmtLong(to)}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">Admin</p>
+            <h2 className="mt-1 text-2xl font-semibold tracking-tight">Print DTR</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Civil Service Form No. 48 · cut-off {fmtLong(from)} to {fmtLong(to)}</p>
           </div>
           <div className="flex items-center gap-3">
             <Badge>Super admin</Badge>
@@ -270,10 +270,10 @@ export default function DtrPrint({ onLock, signOut }) {
           </div>
         </div>
 
-        <div className="grid gap-4 rounded-xl border bg-card p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 rounded-xl border bg-card p-5 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-2">
             <Label>Cut-off</Label>
-            <div className="inline-flex items-center rounded-lg border bg-card shadow-sm">
+            <div className="inline-flex items-center rounded-lg border bg-card">
               <Button variant="ghost" size="icon" className="rounded-r-none" onClick={() => setEnd((e) => shiftEnd(e, -1))} aria-label="Previous cut-off"><IconChevronLeft /></Button>
               <button onClick={() => setEnd(currentEnd())} disabled={isLatest} className="h-9 border-x px-3 text-sm font-medium hover:bg-accent disabled:cursor-default disabled:text-muted-foreground disabled:hover:bg-transparent">Current</button>
               <Button variant="ghost" size="icon" className="rounded-l-none" disabled={isLatest} onClick={() => setEnd((e) => shiftEnd(e, 1))} aria-label="Next cut-off"><IconChevronRight /></Button>
@@ -283,7 +283,7 @@ export default function DtrPrint({ onLock, signOut }) {
             <Label htmlFor="dtr-emp">Employee ID</Label>
             <Input id="dtr-emp" value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={onSearchKey} placeholder="Type employee ID, then Enter" autoComplete="off" autoFocus />
             {q && (
-              <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-64 overflow-auto rounded-md border bg-card shadow-lg">
+              <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-64 overflow-auto rounded-lg border bg-card shadow-md">
                 {matches.length ? matches.map((e) => (
                   <button key={e.no} type="button" onClick={() => choose(e)} className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm hover:bg-accent">
                     <span className="font-medium">{e.name}</span>
@@ -391,7 +391,7 @@ export default function DtrPrint({ onLock, signOut }) {
                     <span>Holiday / Suspended for</span>
                     <div className="inline-flex rounded-md border bg-muted/40 p-0.5 font-medium" role="group" aria-label="Applies to">
                       {[['all', 'Everyone'], ['one', 'This employee']].map(([k, label]) => (
-                        <button key={k} type="button" onClick={() => setPick((x) => ({ ...x, scope: k }))} className={`rounded px-2.5 py-1 transition-colors ${markScope === k ? 'bg-primary text-primary-foreground shadow-sm' : 'hover:text-foreground'}`}>{label}</button>
+                        <button key={k} type="button" onClick={() => setPick((x) => ({ ...x, scope: k }))} className={`rounded px-2.5 py-1 transition-colors ${markScope === k ? 'bg-primary text-primary-foreground' : 'hover:text-foreground'}`}>{label}</button>
                       ))}
                     </div>
                   </div>

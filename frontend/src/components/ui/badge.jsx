@@ -9,5 +9,5 @@ const variants = {
 };
 
 export const Badge = ({ className, variant = 'default', ...p }) => (
-  <span className={cn('inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold', variants[variant], className)} {...p} />
+  <span className={cn('inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-medium', variants[variant], className)} {...p} />
 );

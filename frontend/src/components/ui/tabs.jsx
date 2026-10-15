@@ -3,7 +3,7 @@ import { cn } from './utils';
 // Segmented control styled like shadcn Tabs.
 export function Tabs({ value, onChange, items, className }) {
   return (
-    <div role="tablist" className={cn('inline-flex h-9 items-center rounded-lg bg-muted p-1 text-muted-foreground', className)}>
+    <div role="tablist" className={cn('inline-flex h-9 items-center rounded-lg border bg-muted/60 p-0.5 text-muted-foreground', className)}>
       {items.map(([k, label]) => (
         <button
           key={k}
@@ -13,7 +13,7 @@ export function Tabs({ value, onChange, items, className }) {
           className={cn(
             'inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium transition-all',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-            value === k ? 'bg-card text-foreground shadow' : 'hover:text-foreground',
+            value === k ? 'bg-card text-foreground shadow-sm' : 'hover:text-foreground',
           )}
         >
           {label}

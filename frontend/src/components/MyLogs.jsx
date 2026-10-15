@@ -119,8 +119,8 @@ export default function MyLogs() {
     <main className="mx-auto w-full max-w-9xl space-y-5 px-4 py-6 print:p-0 sm:px-6">
       <div className="space-y-5 print:hidden">
       <div>
-        <p className="text-xs font-bold uppercase tracking-widest text-primary">Employee</p>
-        <h2 className="mt-1 text-2xl font-bold tracking-tight">My DTR</h2>
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">Employee</p>
+        <h2 className="mt-1 text-2xl font-semibold tracking-tight">My DTR</h2>
         <p className="mt-1 text-sm text-muted-foreground">{token ? 'Your own time in and time out, and your printable DTR.' : 'Sign in with your employee ID and your passcode.'}</p>
       </div>
 
@@ -162,7 +162,7 @@ export default function MyLogs() {
               </div>
               <Button variant="outline" onClick={() => window.print()} disabled={!dtrEmp}><IconPrinter /> Print DTR</Button>
               <Button variant="ghost" onClick={() => signOut()}><IconLock /> Sign out</Button>
-            <div className="inline-flex items-center rounded-lg border bg-card shadow-sm">
+            <div className="inline-flex items-center rounded-lg border bg-card">
               <Button variant="ghost" size="icon" className="rounded-r-none" onClick={() => setEnd((e) => shiftEnd(e, -1))} aria-label="Previous cut-off"><IconChevronLeft /></Button>
               <button onClick={() => setEnd(currentEnd())} disabled={isLatest} className="h-9 border-x px-3 text-sm font-medium hover:bg-accent disabled:cursor-default disabled:text-muted-foreground disabled:hover:bg-transparent">Current</button>
               <Button variant="ghost" size="icon" className="rounded-l-none" disabled={isLatest} onClick={() => setEnd((e) => shiftEnd(e, 1))} aria-label="Next cut-off"><IconChevronRight /></Button>

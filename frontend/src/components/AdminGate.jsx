@@ -4,7 +4,7 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Input, Label } from './ui/input';
 import { Alert } from './ui/alert';
-import { IconLock } from './ui/icons';
+import { IconArrowLeft, IconLock } from './ui/icons';
 
 function AdminLogin({ onUnlock, notice }) {
   const [password, setPassword] = useState('');
@@ -35,7 +35,7 @@ function AdminLogin({ onUnlock, notice }) {
       <Card className="w-full max-w-sm">
         <form onSubmit={submit}>
           <CardHeader className="items-center text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary"><IconLock width={22} height={22} /></div>
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent text-primary"><IconLock width={22} height={22} /></div>
             <CardTitle className="pt-2 text-xl">Super Admin Access</CardTitle>
             <CardDescription>Employee Management is restricted. Enter the super admin password to continue.</CardDescription>
           </CardHeader>
@@ -49,7 +49,7 @@ function AdminLogin({ onUnlock, notice }) {
               </div>
             </div>
             <Button type="submit" disabled={busy || !password} className="w-full">{busy ? 'Checking…' : 'Unlock'}</Button>
-            <a href="/" className="block text-center text-sm text-muted-foreground hover:text-primary">← Back to attendance</a>
+            <a href="/" className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-primary"><IconArrowLeft width={14} height={14} /> Back to attendance</a>
           </CardContent>
         </form>
       </Card>

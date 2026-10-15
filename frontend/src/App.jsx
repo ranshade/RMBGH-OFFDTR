@@ -18,7 +18,7 @@ export default function App() {
         closeButton
         toastOptions={{
           classNames: {
-            toast: '!rounded-lg !border !shadow-lg',
+            toast: '!rounded-lg !border !shadow-sm',
             success: '!border-sky-200 !bg-sky-50 !text-sky-900',
             error: '!border-red-200 !bg-red-50 !text-red-800',
           },

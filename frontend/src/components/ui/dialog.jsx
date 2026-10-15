@@ -39,13 +39,13 @@ export function Dialog({ open, onClose, title, description, children, className 
   if (!open) return null;
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-950/50 backdrop-blur-[1px]" onClick={onClose} aria-hidden="true" />
+      <div className="absolute inset-0 bg-slate-900/40" onClick={onClose} aria-hidden="true" />
       <div
         ref={ref}
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={cn('relative z-10 max-h-[calc(100vh-2rem)] w-full overflow-y-auto rounded-xl border bg-card p-6 shadow-xl', /(^|\s)max-w-/.test(className || '') ? '' : 'max-w-md', className)}
+        className={cn('relative z-10 max-h-[calc(100vh-2rem)] w-full overflow-y-auto rounded-xl border bg-card p-6 shadow-lg', /(^|\s)max-w-/.test(className || '') ? '' : 'max-w-md', className)}
       >
         <button onClick={onClose} aria-label="Close" className="absolute right-4 top-4 rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>

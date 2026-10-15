@@ -45,7 +45,7 @@ function StatCard({ label, value, hint }) {
     <Card>
       <CardHeader tight><CardDescription className="font-medium">{label}</CardDescription></CardHeader>
       <CardContent>
-        <p className="text-3xl font-bold tracking-tight">{value}</p>
+        <p className="text-3xl font-semibold tracking-tight">{value}</p>
         <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
       </CardContent>
     </Card>
@@ -247,8 +247,8 @@ export default function LogsPage({ onLock, signOut }) {
     <main className="mx-auto w-full max-w-9xl space-y-5 px-4 py-6 sm:px-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-primary">Admin</p>
-          <h2 className="mt-1 text-2xl font-bold tracking-tight">Attendance Logs</h2>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">Admin</p>
+          <h2 className="mt-1 text-2xl font-semibold tracking-tight">Attendance Logs</h2>
           <p className="mt-1 text-sm text-muted-foreground">Cut-off runs from the 26th to the 25th of each month for DTR submission.</p>
         </div>
         <div className="flex items-center gap-3">
@@ -259,19 +259,19 @@ export default function LogsPage({ onLock, signOut }) {
       </div>
 
       {/* DTR cut-off overview */}
-      <Card className="group relative overflow-hidden rounded-2xl border-slate-200/80 bg-white shadow-sm">
+      <Card className="group relative overflow-hidden rounded-xl border-slate-200/80 bg-white">
         <div className="absolute inset-y-0 left-0 w-1 bg-sky-600" aria-hidden="true" />
         <div className="grid gap-5 p-5 pl-6 sm:p-6 sm:pl-7 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
           <div className="flex min-w-0 items-start gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-sky-50 text-sky-700 ring-1 ring-inset ring-sky-100">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-700 ring-1 ring-inset ring-sky-100">
               <IconCalendar width={22} height={22} />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">{monthLabel} cut-off</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{monthLabel} cut-off</p>
                 {isLatest ? <Badge>This period</Badge> : <Badge variant="secondary">Closed</Badge>}
               </div>
-              <p className="mt-1 text-2xl font-bold tracking-tight text-slate-950 sm:text-[1.75rem]">{fmtRange(from, to)}</p>
+              <p className="mt-1 text-2xl font-semibold tracking-tight text-slate-950 sm:text-[1.75rem]">{fmtRange(from, to)}</p>
               <p className={`mt-1.5 text-sm leading-5 ${urgent ? 'font-semibold text-amber-700' : 'text-slate-500'}`}>{hint}</p>
               {isLatest && (
                 <div className="mt-4 max-w-md">
@@ -287,7 +287,7 @@ export default function LogsPage({ onLock, signOut }) {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-            <div className="inline-flex h-10 items-center rounded-xl border border-slate-200 bg-slate-50 p-0.5">
+            <div className="inline-flex h-10 items-center rounded-lg border border-slate-200 bg-slate-50 p-0.5">
               <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg text-slate-600 hover:bg-white" onClick={() => setEnd((e) => shift(e, -1))} aria-label="Previous cut-off"><IconChevronLeft /></Button>
               <button
                 onClick={() => setEnd(currentPeriodEnd())}
@@ -298,8 +298,8 @@ export default function LogsPage({ onLock, signOut }) {
               </button>
               <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg text-slate-600 hover:bg-white" disabled={isLatest} onClick={() => setEnd((e) => shift(e, 1))} aria-label="Next cut-off"><IconChevronRight /></Button>
             </div>
-            <Button variant="outline" className="h-10 rounded-xl border-slate-200" onClick={() => { window.location.href = `/?view=dtr&end=${to.getFullYear()}-${pad(to.getMonth() + 1)}`; }}><IconPrinter /> Print DTR</Button>
-            <Button className="h-10 rounded-xl bg-sky-700 text-white hover:bg-sky-800" onClick={exportCsv}><IconDownload /> Export CSV</Button>
+            <Button variant="outline" className="h-10 rounded-lg border-slate-200" onClick={() => { window.location.href = `/?view=dtr&end=${to.getFullYear()}-${pad(to.getMonth() + 1)}`; }}><IconPrinter /> Print DTR</Button>
+            <Button className="h-10 rounded-lg bg-sky-700 text-white hover:bg-sky-800" onClick={exportCsv}><IconDownload /> Export CSV</Button>
           </div>
         </div>
       </Card>
@@ -342,11 +342,11 @@ export default function LogsPage({ onLock, signOut }) {
                 <TableBody>
                   {dtr.flatMap((emp) =>
                     emp.rows.map((x, i) => (
-                      <TableRow key={`${emp.no}-${x.day}-${x.inP?.uuid || x.outP?.uuid}`} className={i === 0 ? 'border-t-2' : 'border-b-0'}>
+                      <TableRow key={`${emp.no}-${x.day}-${x.inP?.uuid || x.outP?.uuid}`} className={i === 0 ? 'border-t' : 'border-b-0'}>
                         <TableCell className="py-2 pl-6">
                           {i === 0 && (
                             <div className="flex items-center gap-3">
-                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">{initials(emp.name)}</div>
+                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">{initials(emp.name)}</div>
                               <span className="font-medium">{emp.name}</span>
                             </div>
                           )}

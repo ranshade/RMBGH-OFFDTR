@@ -11,6 +11,6 @@ export const TableRow = ({ className, ...p }) => (
   <tr className={cn('border-b transition-colors hover:bg-muted/50', className)} {...p} />
 );
 export const TableHead = ({ className, ...p }) => (
-  <th className={cn('h-10 px-4 text-left align-middle text-xs font-medium uppercase tracking-wide text-muted-foreground', className)} {...p} />
+  <th className={cn('h-10 px-4 text-left align-middle text-xs font-semibold uppercase tracking-wide text-muted-foreground', className)} {...p} />
 );
 export const TableCell = ({ className, ...p }) => <td className={cn('px-4 py-3 align-middle', className)} {...p} />;

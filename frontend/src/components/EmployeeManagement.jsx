@@ -107,8 +107,8 @@ export default function EmployeeManagement({ onLock, signOut }) {
     <main className="mx-auto w-full max-w-9xl space-y-5 px-4 py-6 sm:px-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-primary">Admin</p>
-          <h2 className="mt-1 text-2xl font-bold tracking-tight">Employee Management</h2>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">Admin</p>
+          <h2 className="mt-1 text-2xl font-semibold tracking-tight">Employee Management</h2>
           <p className="mt-1 text-sm text-muted-foreground">Add employees, update details, and control who can record attendance.</p>
         </div>
         <div className="flex items-center gap-3">
@@ -123,7 +123,7 @@ export default function EmployeeManagement({ onLock, signOut }) {
           <Card key={k}>
             <CardHeader tight><CardDescription className="font-medium">{k}</CardDescription></CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold tracking-tight">{v}</p>
+              <p className="text-3xl font-semibold tracking-tight">{v}</p>
               <p className="mt-1 text-xs text-muted-foreground">{d}</p>
             </CardContent>
           </Card>
@@ -160,7 +160,7 @@ export default function EmployeeManagement({ onLock, signOut }) {
                   <TableRow key={emp.id}>
                     <TableCell className="pl-6">
                       <div className="flex items-center gap-3">
-                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${emp.status === 'active' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>{initials(emp.full_name)}</div>
+                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${emp.status === 'active' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>{initials(emp.full_name)}</div>
                         <span className="font-medium">{emp.full_name}</span>
                         {!emp.has_password && <Badge variant="secondary" className="px-1.5 text-[10px]">No passcode</Badge>}
                       </div>

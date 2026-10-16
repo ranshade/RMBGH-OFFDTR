@@ -7,6 +7,7 @@ import LogsPage from "./components/LogsPage";
 import DtrPrint from "./components/DtrPrint";
 import MyLogs from "./components/MyLogs";
 import KpiPage from "./components/KpiPage";
+import SystemLogsPage from "./components/SystemLogsPage";
 
 export default function App() {
   const view = new URLSearchParams(window.location.search).get("view");
@@ -21,7 +22,9 @@ export default function App() {
             ? "mylogs"
             : view === "kpi"
               ? "kpi"
-              : "kiosk";
+              : view === "syslogs"
+                ? "syslogs"
+                : "kiosk";
 
   return (
     <div className={`app-shell app-view-${current} flex min-h-screen flex-col`}>
@@ -51,6 +54,9 @@ export default function App() {
         )}
         {current === "kpi" && (
           <AdminGate>{(auth) => <KpiPage {...auth} />}</AdminGate>
+        )}
+        {current === "syslogs" && (
+          <AdminGate>{(auth) => <SystemLogsPage {...auth} />}</AdminGate>
         )}
       </div>
     </div>

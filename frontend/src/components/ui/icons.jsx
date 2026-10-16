@@ -14,3 +14,4 @@ export const IconArrowLeft = (p) => <svg {...base} {...p}><path d="m12 19-7-7 7-
 export const IconPrinter = (p) => <svg {...base} {...p}><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><path d="M6 14h12v8H6z" /></svg>;
 export const IconCheck = (p) => <svg {...base} {...p}><path d="m5 12.5 4.5 4.5L19 7.5" /></svg>;
 export const IconChart = (p) => <svg {...base} {...p}><path d="M3 3v18h18M7 15l4-5 3 3 5-6" /></svg>;
+export const IconShield = (p) => <svg {...base} {...p}><path d="M12 3l8 3v6c0 4.5-3.2 8.2-8 9-4.8-.8-8-4.5-8-9V6l8-3z" /><path d="M9 12l2 2 4-4" /></svg>;

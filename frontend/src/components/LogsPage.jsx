@@ -10,7 +10,7 @@ import { Alert } from './ui/alert';
 import { toast } from 'sonner';
 import { PunchPhoto, PhotoViewer } from './PunchPhoto';
 import { Dialog } from './ui/dialog';
-import { IconArrowLeft, IconCalendar, IconChart, IconChevronLeft, IconChevronRight, IconDownload, IconLock, IconPencil, IconPrinter, IconSearch } from './ui/icons';
+import { IconArrowLeft, IconCalendar, IconChart, IconChevronLeft, IconChevronRight, IconDownload, IconLock, IconPencil, IconPrinter, IconSearch, IconShield } from './ui/icons';
 
 /* Government DTR cut-off: 26th of the previous month up to the 25th of the period's month. */
 const pad = (n) => String(n).padStart(2, '0');
@@ -254,6 +254,7 @@ export default function LogsPage({ onLock, signOut }) {
         <div className="flex items-center gap-3">
           <Badge>Super admin</Badge>
           <Button variant="outline" onClick={() => { window.location.href = '/?view=kpi'; }}><IconChart /> KPIs</Button>
+          <Button variant="outline" onClick={() => { window.location.href = '/?view=syslogs'; }}><IconShield /> System logs</Button>
           <Button variant="outline" onClick={() => { window.location.href = '/?view=manage'; }}><IconArrowLeft /> Employees</Button>
           <Button variant="outline" onClick={signOut}><IconLock /> Lock</Button>
         </div>

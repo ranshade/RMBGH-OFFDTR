@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { Dialog } from './ui/dialog';
 import { IconList, IconLock, IconPencil, IconPlus, IconSearch } from './ui/icons';
 
-const emptyForm = { employee_no: '', full_name: '', status: 'active', password: '' };
+const emptyForm = { employee_no: '', full_name: '', email: '', status: 'active', password: '' };
 const initials = (n) => n.split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
 
 export default function EmployeeManagement({ onLock, signOut }) {
@@ -55,7 +55,7 @@ export default function EmployeeManagement({ onLock, signOut }) {
     setDialog({ mode: 'add' });
   }
   function openEdit(emp) {
-    setForm({ employee_no: emp.employee_no, full_name: emp.full_name, status: emp.status, password: '' });
+    setForm({ employee_no: emp.employee_no, full_name: emp.full_name, email: emp.email || '', status: emp.status, password: '' });
     setFormError('');
     setShowPw(false);
     setDialog({ mode: 'edit', id: emp.id });
@@ -69,8 +69,8 @@ export default function EmployeeManagement({ onLock, signOut }) {
     setFormError('');
     try {
       const body = editing
-        ? { employee_no: form.employee_no.trim(), full_name: form.full_name, status: form.status, password: form.password || undefined }
-        : { ...form, password: form.password || undefined };
+        ? { employee_no: form.employee_no.trim(), full_name: form.full_name, email: form.email.trim() || null, status: form.status, password: form.password || undefined }
+        : { ...form, email: form.email.trim() || null, password: form.password || undefined };
       const res = await api(editing ? `/employees/${dialog.id}` : '/employees', {
         method: editing ? 'PUT' : 'POST',
         headers: jsonHeaders,
@@ -151,6 +151,7 @@ export default function EmployeeManagement({ onLock, signOut }) {
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="pl-6">Employee</TableHead>
                   <TableHead>Employee ID</TableHead>
+                  <TableHead>Email</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="pr-6 text-right">Actions</TableHead>
                 </TableRow>
@@ -163,9 +164,11 @@ export default function EmployeeManagement({ onLock, signOut }) {
                         <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${emp.status === 'active' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>{initials(emp.full_name)}</div>
                         <span className="font-medium">{emp.full_name}</span>
                         {!emp.has_password && <Badge variant="secondary" className="px-1.5 text-[10px]">No passcode</Badge>}
+                        {!emp.email && <Badge variant="secondary" className="px-1.5 text-[10px]">No email</Badge>}
                       </div>
                     </TableCell>
                     <TableCell className="font-mono text-xs text-muted-foreground">{emp.employee_no}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{emp.email || '—'}</TableCell>
                     <TableCell><Badge variant={emp.status === 'active' ? 'default' : 'secondary'} className="capitalize">{emp.status}</Badge></TableCell>
                     <TableCell className="pr-6">
                       <div className="flex justify-end gap-2">
@@ -198,6 +201,11 @@ export default function EmployeeManagement({ onLock, signOut }) {
           <div className="space-y-2">
             <Label htmlFor="emp-name">Full name *</Label>
             <Input id="emp-name" data-autofocus={dialog?.mode === 'edit' ? '' : undefined} required value={form.full_name} onChange={(e) => set('full_name', e.target.value)} placeholder="Employee full name" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="emp-email">Email</Label>
+            <Input id="emp-email" type="email" autoComplete="off" maxLength={190} value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="name@example.com" />
+            <p className="text-xs text-muted-foreground">A confirmation with the date and time is sent here every Time In / Time Out. Leave blank to skip.</p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="emp-pw">{dialog?.mode === 'edit' ? 'New passcode' : 'Passcode'}</Label>

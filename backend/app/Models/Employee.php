@@ -8,10 +8,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Employee extends Model
 {
     protected $fillable = [
-        'employee_no', 'full_name', 'department', 'position', 'status', 'password',
+        'employee_no', 'full_name', 'email', 'department', 'position', 'status', 'password',
     ];
 
-    protected $hidden = ['password'];
+    protected $hidden = ['password', 'email'];
 
     public function getHasPasswordAttribute(): bool
     {

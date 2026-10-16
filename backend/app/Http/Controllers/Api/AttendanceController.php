@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Mail\AttendanceRecorded;
 use App\Models\AttendanceLog;
 use App\Models\DtrDayMark;
 use App\Models\Employee;
@@ -10,10 +11,13 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Throwable;
 
 class AttendanceController extends Controller
 {
@@ -289,6 +293,8 @@ class AttendanceController extends Controller
             return response()->json(['message' => $result['message']], 409);
         }
 
+        $this->sendPunchEmail($result['employee'], $result['log']);
+
         return response()->json([
             'message' => 'Attendance recorded successfully.',
             'record' => $result['log'],
@@ -298,6 +304,30 @@ class AttendanceController extends Controller
             ],
             'next_event' => $this->nextEventAfter($result['log']->event_type, $result['log']->recorded_at, $result['log']->recorded_at),
         ], 201);
+    }
+
+    private function sendPunchEmail(Employee $employee, AttendanceLog $log): void
+    {
+        if (!config('attendance.email_notifications') || blank($employee->email)) {
+            return;
+        }
+
+        try {
+            Mail::to($employee->email)->queue(new AttendanceRecorded(
+                $employee->full_name,
+                $employee->employee_no,
+                $log->event_type,
+                $log->recorded_at,
+                $log->station_code,
+                $log->id,
+            ));
+        } catch (Throwable $e) {
+            Log::warning('Attendance email was not sent.', [
+                'employee_no' => $employee->employee_no,
+                'record_uuid' => $log->record_uuid,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     private function nextEventAfter(?string $lastEvent, $lastAt = null, $now = null): string

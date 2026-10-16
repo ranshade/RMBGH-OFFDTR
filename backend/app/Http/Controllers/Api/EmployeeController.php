@@ -37,7 +37,7 @@ class EmployeeController extends Controller
 
         $rows = $query->orderBy('full_name')->limit(500)->get();
         if ($request->boolean('all')) {
-            $rows->each->append('has_password'); 
+            $rows->each->makeVisible('email')->append('has_password');
         }
 
         return response()->json($rows);
@@ -48,6 +48,7 @@ class EmployeeController extends Controller
         $validated = $request->validate([
             'employee_no' => ['sometimes', 'required', 'string', 'max:50', 'regex:/^[A-Za-z0-9._-]+$/', Rule::unique('employees', 'employee_no')->ignore($employee->id)],
             'full_name' => ['sometimes', 'required', 'string', 'max:160'],
+            'email' => ['nullable', 'email:rfc', 'max:190'],
             'department' => ['nullable', 'string', 'max:120'],
             'position' => ['nullable', 'string', 'max:120'],
             'status' => ['sometimes', Rule::in(['active', 'inactive'])],
@@ -78,7 +79,7 @@ class EmployeeController extends Controller
             }
         });
 
-        return response()->json($employee->fresh()->append('has_password'));
+        return response()->json($employee->fresh()->makeVisible('email')->append('has_password'));
     }
 
     public function store(Request $request)
@@ -86,6 +87,7 @@ class EmployeeController extends Controller
         $validated = $request->validate([
             'employee_no' => ['required', 'string', 'max:50', 'regex:/^[A-Za-z0-9._-]+$/', 'unique:employees,employee_no'],
             'full_name' => ['required', 'string', 'max:160'],
+            'email' => ['nullable', 'email:rfc', 'max:190'],
             'department' => ['nullable', 'string', 'max:120'],
             'position' => ['nullable', 'string', 'max:120'],
             'status' => ['nullable', Rule::in(['active', 'inactive'])],
@@ -99,6 +101,6 @@ class EmployeeController extends Controller
             unset($validated['password']);
         }
 
-        return response()->json(Employee::create($validated)->append('has_password'), 201);
+        return response()->json(Employee::create($validated)->makeVisible('email')->append('has_password'), 201);
     }
 }

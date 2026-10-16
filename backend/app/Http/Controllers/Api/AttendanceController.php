@@ -7,6 +7,7 @@ use App\Mail\AttendanceRecorded;
 use App\Models\AttendanceLog;
 use App\Models\DtrDayMark;
 use App\Models\Employee;
+use App\Support\AuditLog;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -110,6 +111,12 @@ class AttendanceController extends Controller
             return response()->json(['message' => 'The time cannot be in the future.'], 422);
         }
 
+        $before = [
+            'employee_no' => $log->employee_no_snapshot,
+            'event_type' => $log->event_type,
+            'recorded_at' => $log->recorded_at->format('Y-m-d H:i:s'),
+        ];
+
         $log->update($owner + [
             'recorded_at' => $recordedAt,
             'attendance_date' => $recordedAt->toDateString(),
@@ -117,7 +124,19 @@ class AttendanceController extends Controller
             'status' => 'edited',
         ]);
 
-        return response()->json($log->fresh()->load('employee:id,employee_no,full_name'));
+        $log = $log->fresh()->load('employee:id,employee_no,full_name');
+
+        AuditLog::record('attendance.edited', "Edited punch of {$log->employee_no_snapshot}.", [
+            'target' => ['type' => 'punch', 'label' => $this->punchLabel($log)],
+            'changes' => AuditLog::diff($before, [
+                'employee_no' => $log->employee_no_snapshot,
+                'event_type' => $log->event_type,
+                'recorded_at' => $log->recorded_at->format('Y-m-d H:i:s'),
+            ], ['employee_no', 'event_type', 'recorded_at']),
+            'uuid' => $log->record_uuid,
+        ]);
+
+        return response()->json($log);
     }
 
     public function storeManual(Request $request)
@@ -150,7 +169,17 @@ class AttendanceController extends Controller
             'status' => 'manual',
         ]);
 
+        AuditLog::record('attendance.manual_added', "Added {$log->event_type} for {$employee->employee_no} manually.", [
+            'target' => ['type' => 'punch', 'label' => $this->punchLabel($log)],
+            'uuid' => $log->record_uuid,
+        ]);
+
         return response()->json($log->load('employee:id,employee_no,full_name'), 201);
+    }
+
+    private function punchLabel(AttendanceLog $log): string
+    {
+        return "{$log->employee_no_snapshot} · {$log->event_type} · {$log->recorded_at->format('M j, Y h:i A')}";
     }
 
     public function photo(string $uuid)
@@ -234,9 +263,8 @@ class AttendanceController extends Controller
 
         RateLimiter::clear($throttleKey);
 
-        $recordedAt = isset($validated['device_time'])
-            ? Carbon::parse($validated['device_time'])->setTimezone(config('app.timezone'))
-            : now();
+        // The kiosk's own clock is not trusted for the punch time.
+        $recordedAt = now();
 
         $date = $recordedAt->toDateString();
         $uuid = (string) Str::uuid();

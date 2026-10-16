@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Support\AdminToken;
+use App\Support\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
@@ -42,10 +43,16 @@ class AdminAuthController extends Controller
 
         if ($role === null) {
             RateLimiter::hit($throttleKey, 60);
+            AuditLog::record('auth.login_failed', 'Failed admin sign-in attempt.');
+            if (RateLimiter::attempts($throttleKey) === 5) {
+                AuditLog::record('auth.lockout', 'Admin sign-in locked out after 5 failed attempts.');
+            }
             return response()->json(['message' => 'Incorrect password.'], 422);
         }
 
         RateLimiter::clear($throttleKey);
+        $actorName = $role === 'hr' ? 'HR' : 'Super Admin';
+        AuditLog::record('auth.login', "{$actorName} signed in.", ['actor' => ['type' => 'admin', 'name' => $actorName, 'id' => $role]]);
         return response()->json(['token' => AdminToken::issue($role), 'role' => $role]);
     }
 
@@ -56,6 +63,8 @@ class AdminAuthController extends Controller
 
     public function logout(Request $request)
     {
+        $role = AdminToken::role($request);
+        AuditLog::record('auth.logout', ($role === 'hr' ? 'HR' : 'Super Admin') . ' signed out.');
         AdminToken::revoke($request);
         return response()->json(['ok' => true]);
     }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\AttendanceLog;
+use App\Support\AuditLog;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -14,6 +15,10 @@ class AttendanceReportController extends Controller
         $validated = $request->validate([
             'from' => ['required', 'date_format:Y-m-d'],
             'to' => ['required', 'date_format:Y-m-d', 'after_or_equal:from'],
+        ]);
+
+        AuditLog::record('report.exported', "Exported attendance CSV from {$validated['from']} to {$validated['to']}.", [
+            'target' => ['type' => 'report', 'label' => "{$validated['from']} to {$validated['to']}"],
         ]);
 
         $filename = 'attendance-' . $validated['from'] . '-to-' . $validated['to'] . '.csv';
@@ -31,16 +36,25 @@ class AttendanceReportController extends Controller
                         fputcsv($out, [
                             $log->record_uuid,
                             $log->employee_no_snapshot,
-                            optional($log->employee)->full_name,
+                            $this->csvSafe(optional($log->employee)->full_name),
                             optional($log->attendance_date)->format('Y-m-d'),
                             $log->event_type,
                             optional($log->recorded_at)->format('Y-m-d H:i:s'),
-                            $log->station_code,
+                            $this->csvSafe($log->station_code),
                             $log->status,
                         ]);
                     }
                 });
             fclose($out);
         }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    private function csvSafe(?string $value): ?string
+    {
+        if ($value !== null && preg_match('/^[=+\-@\t\r]/', $value)) {
+            return "'" . $value;
+        }
+
+        return $value;
     }
 }

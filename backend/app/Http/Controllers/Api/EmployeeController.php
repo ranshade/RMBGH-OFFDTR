@@ -12,9 +12,12 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use App\Support\AdminToken;
+use App\Support\AuditLog;
 
 class EmployeeController extends Controller
 {
+    private const AUDITED_FIELDS = ['employee_no', 'full_name', 'email', 'department', 'position', 'status'];
+
     public function index(Request $request)
     {
         $search = trim((string) $request->query('search', ''));
@@ -66,6 +69,8 @@ class EmployeeController extends Controller
         }
 
         $oldNo = $employee->employee_no;
+        $before = $employee->only(self::AUDITED_FIELDS);
+        $passcodeChanged = array_key_exists('password', $validated);
 
         DB::transaction(function () use ($employee, $validated, $oldNo) {
             $employee->update($validated);
@@ -83,7 +88,10 @@ class EmployeeController extends Controller
             }
         });
 
-        return response()->json($employee->fresh()->makeVisible('email')->append('has_password'));
+        $employee = $employee->fresh();
+        $this->auditUpdate($employee, $before, $passcodeChanged);
+
+        return response()->json($employee->makeVisible('email')->append('has_password'));
     }
 
     public function store(Request $request)
@@ -105,6 +113,40 @@ class EmployeeController extends Controller
             unset($validated['password']);
         }
 
-        return response()->json(Employee::create($validated)->makeVisible('email')->append('has_password'), 201);
+        $employee = Employee::create($validated);
+        AuditLog::record('employee.created', "Added employee {$employee->full_name} ({$employee->employee_no}).", [
+            'target' => $this->targetFor($employee),
+        ]);
+
+        return response()->json($employee->makeVisible('email')->append('has_password'), 201);
+    }
+
+    private function auditUpdate(Employee $employee, array $before, bool $passcodeChanged): void
+    {
+        $changes = AuditLog::diff($before, $employee->only(self::AUDITED_FIELDS), self::AUDITED_FIELDS);
+        if ($passcodeChanged) {
+            $changes[] = ['field' => 'passcode', 'old' => null, 'new' => 'changed'];
+        }
+        if (!$changes) {
+            return;
+        }
+
+        $statusChange = collect($changes)->firstWhere('field', 'status');
+        $action = match ($statusChange['new'] ?? null) {
+            'inactive' => 'employee.deactivated',
+            'active' => 'employee.reactivated',
+            default => 'employee.updated',
+        };
+        $verb = ['employee.deactivated' => 'Deactivated', 'employee.reactivated' => 'Reactivated'][$action] ?? 'Updated';
+
+        AuditLog::record($action, "{$verb} employee {$employee->full_name} ({$employee->employee_no}).", [
+            'target' => $this->targetFor($employee),
+            'changes' => $changes,
+        ]);
+    }
+
+    private function targetFor(Employee $employee): array
+    {
+        return ['type' => 'employee', 'label' => "{$employee->full_name} ({$employee->employee_no})"];
     }
 }

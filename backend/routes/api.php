@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\DepartmentController;
 use App\Http\Controllers\Api\DtrMarkController;
 use App\Http\Controllers\Api\AdminAuthController;
 use App\Http\Controllers\Api\EmployeeAuthController;
+use App\Http\Controllers\Api\SystemLogController;
 
 Route::get('/health', [HealthController::class, 'show']);
 Route::get('/employees', [EmployeeController::class, 'index']);
@@ -33,3 +34,4 @@ Route::put('/attendance/{uuid}', [AttendanceController::class, 'update'])->middl
 Route::get('/reports/attendance.csv', [AttendanceReportController::class, 'csv'])->middleware('staff');
 Route::get('/dtr/marks', [DtrMarkController::class, 'index'])->middleware('staff');
 Route::put('/dtr/marks', [DtrMarkController::class, 'update'])->middleware('staff');
+Route::get('/system-logs', [SystemLogController::class, 'index'])->middleware('staff');

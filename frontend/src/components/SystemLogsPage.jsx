@@ -283,7 +283,7 @@ function Changes({ changes }) {
 
 export default function SystemLogsPage({ onLock, signOut }) {
   const [range, setRange] = useState("7d");
-  const [state, setState] = useState({ rows: [], demo: false, note: "" });
+  const [state, setState] = useState({ rows: [], error: "" });
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState("all");
   const [severity, setSeverity] = useState("all");
@@ -333,7 +333,6 @@ export default function SystemLogsPage({ onLock, signOut }) {
         r.target?.label,
         actionLabel(r.action),
         r.ip,
-        r.station_code,
       ]
         .filter(Boolean)
         .some((v) => String(v).toLowerCase().includes(q));
@@ -402,18 +401,8 @@ export default function SystemLogsPage({ onLock, signOut }) {
         </div>
       </div>
 
-      {state.demo && !loading && (
-        <div
-          role="status"
-          className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
-        >
-          <Badge variant="warning">Demo data</Badge>
-          <span>
-            {state.note} The entries below are generated examples so you can
-            review the layout. They will be replaced by real records once the
-            backend is connected.
-          </span>
-        </div>
+      {state.error && !loading && (
+        <Alert variant="destructive">{state.error}</Alert>
       )}
 
       <Card className="relative overflow-hidden rounded-xl border-slate-200/80 bg-white">
@@ -696,7 +685,6 @@ export default function SystemLogsPage({ onLock, signOut }) {
                                     CATEGORY_LABEL[r.category] || r.category,
                                   ],
                                   ["IP address", r.ip],
-                                  ["Station", r.station_code],
                                   ["Record ID", r.uuid],
                                   ["Action code", r.action],
                                 ].map(([k, v]) => (

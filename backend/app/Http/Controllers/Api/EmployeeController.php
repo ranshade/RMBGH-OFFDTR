@@ -18,10 +18,10 @@ class EmployeeController extends Controller
     public function index(Request $request)
     {
         $search = trim((string) $request->query('search', ''));
-        $query = Employee::query()->where('employee_no', '!=', config('admin.superadmin_employee_no'));
+        $query = Employee::query()->inDirectory();
         if ($request->boolean('all')) {
-            if (!AdminToken::valid($request)) {
-                return response()->json(['message' => 'Super admin login required.'], 401);
+            if (!AdminToken::valid($request, ['admin', 'hr'])) {
+                return response()->json(['message' => 'Admin or HR login required.'], 401);
             }
         } else {
             $query->where('status', 'active');
@@ -45,6 +45,10 @@ class EmployeeController extends Controller
 
     public function update(Request $request, Employee $employee)
     {
+        if (in_array($employee->employee_no, Employee::hiddenEmployeeNumbers(), true) && !AdminToken::valid($request)) {
+            return response()->json(['message' => 'Only the super admin can edit this account.'], 403);
+        }
+
         $validated = $request->validate([
             'employee_no' => ['sometimes', 'required', 'string', 'max:50', 'regex:/^[A-Za-z0-9._-]+$/', Rule::unique('employees', 'employee_no')->ignore($employee->id)],
             'full_name' => ['sometimes', 'required', 'string', 'max:160'],

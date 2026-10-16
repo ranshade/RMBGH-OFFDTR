@@ -13,17 +13,32 @@ class AdminToken
         return 'admin_token:' . hash('sha256', $token);
     }
 
-    public static function issue(): string
+    public static function issue(string $role = 'admin'): string
     {
         $token = Str::random(64);
-        Cache::put(self::key($token), true, now()->addMinutes(config('admin.token_ttl_minutes')));
+        Cache::put(self::key($token), $role, now()->addMinutes(config('admin.token_ttl_minutes')));
         return $token;
     }
 
-    public static function valid(Request $request): bool
+    public static function role(Request $request): ?string
     {
         $token = $request->bearerToken();
-        return $token !== null && $token !== '' && Cache::has(self::key($token));
+        if ($token === null || $token === '') {
+            return null;
+        }
+
+        $value = Cache::get(self::key($token));
+
+        if ($value === true) {
+            return 'admin';
+        }
+
+        return is_string($value) ? $value : null;
+    }
+
+    public static function valid(Request $request, array $roles = ['admin']): bool
+    {
+        return in_array(self::role($request), $roles, true);
     }
 
     public static function revoke(Request $request): void

@@ -10,6 +10,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call(SuperAdminSeeder::class);
+        $this->call(HrAccountSeeder::class);
 
         // DEMO ONLY. Remove or change this before any real deployment.
         Employee::firstOrCreate(

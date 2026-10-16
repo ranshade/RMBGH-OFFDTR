@@ -40,7 +40,7 @@
                             </table>
 
                             <p style="margin:20px 0 0;font-size:12px;line-height:1.5;color:#6b7280;">
-                                If you did not make this punch, please report it to the admin office.
+                                If you did not make this punch, please report it to the HR Department.
                                 This is an automated message, please do not reply.
                             </p>
                         </td>

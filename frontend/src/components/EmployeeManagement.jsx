@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Alert } from './ui/alert';
 import { toast } from 'sonner';
 import { Dialog } from './ui/dialog';
-import { IconList, IconLock, IconPencil, IconPlus, IconSearch } from './ui/icons';
+import { IconChart, IconList, IconLock, IconPencil, IconPlus, IconSearch } from './ui/icons';
 
 const emptyForm = { employee_no: '', full_name: '', email: '', status: 'active', password: '' };
 const initials = (n) => n.split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
@@ -114,6 +114,7 @@ export default function EmployeeManagement({ onLock, signOut }) {
         <div className="flex items-center gap-3">
           <Badge>Super admin</Badge>
           <Button onClick={() => { window.location.href = '/?view=logs'; }}><IconList /> View Logs</Button>
+          <Button variant="outline" onClick={() => { window.location.href = '/?view=kpi'; }}><IconChart /> KPIs</Button>
           <Button variant="outline" onClick={signOut}><IconLock /> Lock</Button>
         </div>
       </div>

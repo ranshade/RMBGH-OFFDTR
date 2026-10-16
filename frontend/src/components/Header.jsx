@@ -6,7 +6,7 @@ const navClass = (active) => cn(
 );
 
 export default function Header({ view }) {
-  const section = view === 'kiosk' ? 'Attendance station' : view === 'mylogs' ? 'Employee self-service' : view === 'manage' ? 'Administration' : view === 'logs' ? 'Attendance records' : 'DTR workspace';
+  const section = view === 'kiosk' ? 'Attendance station' : view === 'mylogs' ? 'Employee self-service' : view === 'manage' ? 'Administration' : view === 'logs' ? 'Attendance records' : view === 'kpi' ? 'Attendance KPIs' : 'DTR workspace';
   return (
     <header className="modern-header print:hidden">
       <div className="modern-header-inner">
@@ -22,7 +22,7 @@ export default function Header({ view }) {
           <nav className="modern-nav" aria-label="Main navigation">
             <a href="/" className={navClass(view === 'kiosk')}>Attendance</a>
             <a href="/?view=mylogs" className={navClass(view === 'mylogs')}>My DTR</a>
-            <a href="/?view=manage" className={navClass(['manage','logs','dtr'].includes(view))}>Admin</a>
+            <a href="/?view=manage" className={navClass(['manage','logs','dtr','kpi'].includes(view))}>Admin</a>
           </nav>
         </div>
       </div>
